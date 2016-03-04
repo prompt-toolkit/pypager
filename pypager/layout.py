@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.layout.containers import HSplit, Window
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation
@@ -45,25 +45,36 @@ class Layout(object):
         self.container = HSplit([
             self.buffer_window,
             SearchToolbar(vi_mode=True),
-            Window(height=D.exact(1),
-                   content=TokenListControl(
-                       self._get_titlebar_tokens,
-                       default_char=Char(' ', Token.Titlebar))),
+            VSplit([
+                Window(height=D.exact(1),
+                       content=TokenListControl(
+                           self._get_titlebar_left_tokens,
+                           default_char=Char(' ', Token.Titlebar))),
+                Window(height=D.exact(1),
+                       content=TokenListControl(
+                           self._get_titlebar_right_tokens,
+                           align_right=True,
+                           default_char=Char(' ', Token.Titlebar))),
+            ]),
         ])
 
-    def _get_titlebar_tokens(self, cli):
-        document = cli.buffers[DEFAULT_BUFFER].document
-        row = document.cursor_position_row + 1
-
-        result = [
-            (Token.Titlebar, ' pypager - '),
-            (Token.Titlebar, ' line %s' % row),
+    def _get_titlebar_left_tokens(self, cli):
+        return [
+            (Token.Titlebar, ' '),
+            (Token.Titlebar.AppName, 'pypager'),
+            (Token.Titlebar, ' (press h for help or q to quit)'),
         ]
 
-        if self.pager.eof:
-            result.append((Token.Titlebar, '/%s ' % document.line_count))
+    def _get_titlebar_right_tokens(self, cli):
+        document = cli.buffers[DEFAULT_BUFFER].document
+        row = document.cursor_position_row + 1
+        col = document.cursor_position_col + 1
 
-        result.extend([
-            (Token.Titlebar, ' (press h for help or q to quit)'),
-        ])
-        return result
+        if self.pager.eof:
+            return [
+                (Token.Titlebar.CursorPosition,
+                 ' (%s/%s,%s) ' % (row, document.line_count, col))]
+        else:
+            return [
+                (Token.Titlebar.CursorPosition,
+                 ' (%s,%s) ' % (row, col))]

@@ -10,5 +10,7 @@ def create_style():
     return style_from_dict({
         Token.Standout: 'bold #44aaff',
         Token.Standout2: 'underline #888888',
-        Token.Titlebar: 'reverse',
+        Token.Titlebar: 'reverse bg:#888888',
+        Token.Titlebar.AppName: 'bold bg:#eeeeaa',
+        Token.Titlebar.CursorPosition: 'bold bg:#aaffaa',
     })
