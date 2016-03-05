@@ -70,7 +70,7 @@ class Layout(object):
         row = document.cursor_position_row + 1
         col = document.cursor_position_col + 1
 
-        if self.pager.eof:
+        if self.pager.source.eof():
             return [
                 (Token.Titlebar.CursorPosition,
                  ' (%s/%s,%s) ' % (row, document.line_count, col))]

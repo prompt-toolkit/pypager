@@ -19,6 +19,7 @@ handle = manager.registry.add_binding
 
 default_focus = HasFocus(DEFAULT_BUFFER)
 
+
 @handle('q', filter=default_focus)
 @handle('Q', filter=default_focus)
 @handle('Z', 'Z', filter=default_focus)
@@ -94,6 +95,7 @@ def _(event):
     # get_vi_state(event.cli).input_mode = InputMode.INSERT
     event.cli.push_focus(SEARCH_BUFFER)
 
+
 @handle('n', filter=default_focus)
 def _(event):
     " Search next. "
@@ -101,12 +103,14 @@ def _(event):
         event.cli.search_state, include_current_position=False,
         count=event.arg)
 
+
 @handle('N', filter=default_focus)
 def _(event):
     " Search previous. "
     event.current_buffer.apply_search(
         ~event.cli.search_state, include_current_position=False,
         count=event.arg)
+
 
 def create_key_bindings():
     return manager

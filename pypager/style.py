@@ -6,6 +6,7 @@ __all__ = (
     'create_style',
 )
 
+
 def create_style():
     return style_from_dict({
         Token.Standout: 'bold #44aaff',
