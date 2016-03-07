@@ -4,6 +4,7 @@ pypager: A pure Python pager application.
 """
 from __future__ import unicode_literals
 from pypager.pager import Pager
+from pypager.source import PipeSource
 import sys
 import argparse
 import codecs
@@ -24,7 +25,7 @@ def run():
         args = parser.parse_args()
 
         with codecs.open(args.filename, 'rb', encoding='utf-8', errors='ignore') as f:
-            pager = Pager(fileno=f.fileno())
+            pager = Pager(PipeSource(fileno=f.fileno()))
             pager.run()
 
 

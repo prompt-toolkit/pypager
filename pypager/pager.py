@@ -35,11 +35,17 @@ class Pager(object):
     """
     def __init__(self, source):
         assert isinstance(source, Source)
-
         self.source = source
+
+        # When this is True, always make sure that the cursor goes to the
+        # bottom of the visible content. This is similar to 'tail -f'.
+        self.forward_forever = False
 
         # List of lines. (Each line is a list of (token, text) tuples itself.)
         self.line_tokens = [[]]
+
+        # Marks. (Mapping from mark name to (cursor position, scroll_offset).)
+        self.marks = {}
 
         # Create prompt_toolkit stuff.
         self.buffers = {
@@ -48,7 +54,7 @@ class Pager(object):
 
         self.layout = Layout(self)
 
-        manager = create_key_bindings()
+        manager = create_key_bindings(self)
         self.application = Application(
             layout=self.layout.container,
             buffers=self.buffers,
@@ -84,8 +90,8 @@ class Pager(object):
             lines_below_bottom = info.ui_content.line_count - info.last_visible_line()
 
             # Make sure to preload at least 2x the amount of lines on a page.
-            if lines_below_bottom < info.window_height * 2:
-                # Make sure to load at least 2x the amount of lines on a page.
+            if lines_below_bottom < info.window_height * 2 or self.forward_forever:
+                # Lines to be loaded.
                 lines = [info.window_height * 2 - lines_below_bottom]  # nonlocal
 
                 fd = self.source.get_fd()
@@ -107,14 +113,20 @@ class Pager(object):
                         data.append(char)
                     return data
 
+                def insert_text(list_of_fragments):
+                    document = Document(b.text + ''.join(list_of_fragments), b.cursor_position)
+                    b.set_document(document, bypass_readonly=True)
+
+                    if self.forward_forever:
+                        b.cursor_position = len(b.text)
+
                 def receive_content_from_fd():
                     # Read data from the source.
                     tokens = self.source.read_chunk()
                     data = handle_content(tokens)
 
                     # Set document.
-                    document = Document(b.text + ''.join(data), b.cursor_position)
-                    b.set_document(document, bypass_readonly=True)
+                    insert_text(data)
 
                     # Remove the reader when we received another whole page.
                     # or when there is nothing more to read.
@@ -135,8 +147,7 @@ class Pager(object):
                         data.extend(handle_content(tokens))
 
                     # Set document.
-                    document = Document(b.text + ''.join(data), b.cursor_position)
-                    b.set_document(document, bypass_readonly=True)
+                    insert_text(data)
 
                     # Redraw.
                     if data:
