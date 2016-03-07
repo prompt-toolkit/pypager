@@ -135,12 +135,18 @@ def create_key_bindings(pager):
         go_to_mark(event, '.')
 
     def go_to_mark(event, mark):
+        b = event.current_buffer
         try:
-            cursor_pos, vertical_scroll = pager.marks[mark]
+            if mark == '^':  # Start of file.
+                cursor_pos, vertical_scroll = 0, 0
+            elif mark == '$':  # End of file - mark.
+                cursor_pos, vertical_scroll = len(b.text), 0
+            else:  # Custom mark.
+                cursor_pos, vertical_scroll = pager.marks[mark]
         except KeyError:
             pass  # TODO: show warning.
         else:
-            event.current_buffer.cursor_position = cursor_pos
+            b.cursor_position = cursor_pos
             pager.layout.buffer_window.vertical_scroll = vertical_scroll
 
     @handle('F', filter=default_focus)
