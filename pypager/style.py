@@ -20,6 +20,8 @@ ui_style = {
     # UI style
     Token.Titlebar: 'bg:#333333 #aaaaaa',
     Token.Titlebar.CursorPosition: 'bold #ffffff',
+
+    Token.Arg: 'reverse #ccaa00',
 }
 
 

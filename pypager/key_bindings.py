@@ -21,6 +21,11 @@ def create_key_bindings(pager):
 
     default_focus = HasFocus(DEFAULT_BUFFER)
 
+    for c in '01234556789':
+        @handle(c, filter=default_focus)
+        def _(event, c=c):
+            event.append_to_arg_count(c)
+
     @handle('q', filter=default_focus)
     @handle('Q', filter=default_focus)
     @handle('Z', 'Z', filter=default_focus)
