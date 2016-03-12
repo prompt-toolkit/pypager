@@ -15,8 +15,8 @@ setup(
     author='Jonathan Slenders',
     version='0.1',
     license='LICENSE',
-    url='https://github.com/jonathanslenders/pyvim',
-    description='Pure Python Vi Implementation',
+    url='https://github.com/jonathanslenders/pypager',
+    description='Pure Python pager (like "more" and "less").',
     long_description=long_description,
     packages=find_packages('.'),
     install_requires = [

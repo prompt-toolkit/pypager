@@ -18,9 +18,8 @@ ui_style = {
     Token.Standout2: 'underline #888888',
 
     # UI style
-    Token.Titlebar: 'reverse bg:#888888',
-    Token.Titlebar.AppName: 'bold bg:#eeeeaa',
-    Token.Titlebar.CursorPosition: 'bold bg:#aaffaa',
+    Token.Titlebar: 'bg:#333333 #aaaaaa',
+    Token.Titlebar.CursorPosition: 'bold #ffffff',
 }
 
 

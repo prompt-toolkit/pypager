@@ -4,7 +4,7 @@ from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation
 from prompt_toolkit.layout.screen import Char
-from prompt_toolkit.layout.toolbars import SearchToolbar
+from prompt_toolkit.layout.toolbars import SearchToolbar, SystemToolbar
 from prompt_toolkit.token import Token
 from prompt_toolkit.enums import DEFAULT_BUFFER
 
@@ -45,6 +45,7 @@ class Layout(object):
         self.container = HSplit([
             self.buffer_window,
             SearchToolbar(vi_mode=True),
+            SystemToolbar(),
             VSplit([
                 Window(height=D.exact(1),
                        content=TokenListControl(
@@ -60,8 +61,6 @@ class Layout(object):
 
     def _get_titlebar_left_tokens(self, cli):
         return [
-            (Token.Titlebar, ' '),
-            (Token.Titlebar.AppName, 'pypager'),
             (Token.Titlebar, ' (press h for help or q to quit)'),
         ]
 
@@ -71,9 +70,10 @@ class Layout(object):
         col = document.cursor_position_col + 1
 
         if self.pager.source.eof():
+            percentage = int(100 * row / document.line_count)
             return [
                 (Token.Titlebar.CursorPosition,
-                 ' (%s/%s,%s) ' % (row, document.line_count, col))]
+                 ' (%s,%s) %s%% ' % (row, col, percentage))]
         else:
             return [
                 (Token.Titlebar.CursorPosition,

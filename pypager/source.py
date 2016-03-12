@@ -66,8 +66,16 @@ class PipeSource(Source):
         for c in data:
             self._parser.send(c)
 
-        tokens = self._line_tokens[:]
-        del self._line_tokens[:]
+        # Return the tokens from the parser.
+        # (Don't return the last token yet, because the parser should
+        # be able to pop if the input starts with \b).
+        if self._eof:
+            tokens = self._line_tokens[:]
+            del self._line_tokens[:]
+        else:
+            tokens = self._line_tokens[:-1]
+            del self._line_tokens[:-1]
+
         return tokens
 
     def _parse_corot(self):
@@ -124,8 +132,7 @@ class PipeSource(Source):
                             token = ('C', ) + self._attrs
                             break
                         else:
-                            # Unspported sequence.
-                            raise Exception(str(char))
+                            # Ignore unspported sequence.
                             break
             else:
                 line_tokens.append((token, c))

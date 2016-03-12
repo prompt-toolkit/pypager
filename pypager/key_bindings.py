@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 from prompt_toolkit.key_binding.bindings.scroll import scroll_page_up, scroll_page_down, scroll_one_line_down, scroll_one_line_up, scroll_half_page_up, scroll_half_page_down
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.filters import HasFocus
+from prompt_toolkit.filters import HasFocus, Condition
 from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, IncrementalSearchDirection
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.key_binding.vi_state import InputMode
+from prompt_toolkit.utils import suspend_to_background_supported
 
 __all__ = (
     'create_key_bindings',
@@ -153,5 +155,21 @@ def create_key_bindings(pager):
     def _(event):
         " Forward forever, like 'tail -f'. "
         pager.forward_forever = True
+
+    def search_buffer_is_empty(cli):
+        " Returns True when the search buffer is empty. "
+        return cli.buffers[SEARCH_BUFFER].text == ''
+
+    @handle(Keys.Backspace, filter=HasFocus(SEARCH_BUFFER) & Condition(search_buffer_is_empty))
+    def _(event):
+        " Cancel search when backspace is pressed. "
+        # get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
+        event.cli.pop_focus()
+        event.cli.buffers[SEARCH_BUFFER].reset()
+
+    @handle(Keys.ControlZ, filter=Condition(lambda cli: suspend_to_background_supported()))
+    def _(event):
+        " Suspend to bakground. "
+        event.cli.suspend_to_background()
 
     return manager
