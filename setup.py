@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     packages=find_packages('.'),
     install_requires = [
-        'prompt_toolkit==0.59',
+        'prompt_toolkit==0.60',
         'pygments',
     ],
     entry_points={
