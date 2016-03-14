@@ -33,9 +33,10 @@ class Pager(object):
 
     :param
     """
-    def __init__(self, source):
+    def __init__(self, source, lexer=None):
         assert isinstance(source, Source)
         self.source = source
+        self.lexer = lexer
 
         # When this is True, always make sure that the cursor goes to the
         # bottom of the visible content. This is similar to 'tail -f'.
@@ -69,12 +70,12 @@ class Pager(object):
         self._waiting_for_input_stream = False
 
     @classmethod
-    def from_pipe(cls):
+    def from_pipe(cls, lexer=None):
         """
         Create a pager from another process that pipes in our stdin.
         """
         assert not sys.stdin.isatty()
-        return cls(PipeSource(fileno=sys.stdin.fileno()))
+        return cls(PipeSource(fileno=sys.stdin.fileno()), lexer=lexer)
 
     def _on_render(self, cli):
         """

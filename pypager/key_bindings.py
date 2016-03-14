@@ -1,11 +1,12 @@
 from __future__ import unicode_literals
+from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, IncrementalSearchDirection
+from prompt_toolkit.filters import HasFocus, Condition
 from prompt_toolkit.key_binding.bindings.scroll import scroll_page_up, scroll_page_down, scroll_one_line_down, scroll_one_line_up, scroll_half_page_up, scroll_half_page_down
 from prompt_toolkit.key_binding.manager import KeyBindingManager
-from prompt_toolkit.filters import HasFocus, Condition
-from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, IncrementalSearchDirection
-from prompt_toolkit.keys import Keys
 from prompt_toolkit.key_binding.vi_state import InputMode
-from prompt_toolkit.utils import suspend_to_background_supported
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.layout.utils import find_window_for_buffer_name
+from prompt_toolkit.utils import suspend_to_background_supported, get_cwidth
 
 __all__ = (
     'create_key_bindings',
@@ -16,7 +17,7 @@ def create_key_bindings(pager):
         enable_vi_mode=False,
         enable_search=True,
         enable_extra_page_navigation=True,
-        enable_system_bindings=False)
+        enable_system_bindings=True)
     handle = manager.registry.add_binding
 
     default_focus = HasFocus(DEFAULT_BUFFER)
@@ -171,6 +172,46 @@ def create_key_bindings(pager):
         # get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
         event.cli.pop_focus()
         event.cli.buffers[SEARCH_BUFFER].reset()
+
+    @handle(Keys.Left, filter=default_focus)
+    def _(event):
+        " Scroll half page to the left. "
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
+        b = event.cli.current_buffer
+
+        if w and w.render_info:
+            info = w.render_info
+            amount = info.window_width // 2
+
+            # Move cursor horizontally.
+            value = b.cursor_position - min(amount, len(b.document.current_line_before_cursor))
+            b.cursor_position = value
+
+            # Scroll.
+            w.horizontal_scroll = max(0, w.horizontal_scroll - amount)
+
+    @handle(Keys.Right, filter=default_focus)
+    def _(event):
+        " Scroll half page to the right. "
+        w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
+        b = event.cli.current_buffer
+
+        if w and w.render_info:
+            info = w.render_info
+            amount = info.window_width // 2
+
+            # Move the cursor first to a visible line that is long enough to
+            # have the cursor visible after scrolling. (Otherwise, the Window
+            # will scroll back.)
+            xpos = w.horizontal_scroll + amount
+
+            for line in info.displayed_lines:
+                if len(b.document.lines[line]) >= xpos:
+                    b.cursor_position = b.document.translate_row_col_to_index(line, xpos)
+                    break
+
+            # Scroll.
+            w.horizontal_scroll = max(0, w.horizontal_scroll + amount)
 
     @handle(Keys.ControlZ, filter=Condition(lambda cli: suspend_to_background_supported()))
     def _(event):

@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.filters import HasArg
+from prompt_toolkit.filters import HasArg, Condition
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window, ConditionalContainer, Float, FloatContainer
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
-from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation
+from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation, ConditionalProcessor
 from prompt_toolkit.layout.screen import Char
 from prompt_toolkit.layout.toolbars import SearchToolbar, SystemToolbar
 from prompt_toolkit.token import Token
@@ -45,16 +45,21 @@ class Layout(object):
         self.pager = pager
 
         input_processors = [
-            _EscapeProcessor(pager),
+            ConditionalProcessor(
+                processor=_EscapeProcessor(pager),
+                filter=Condition(lambda cli: not bool(pager.lexer)),
+            ),
             TabsProcessor(),
             HighlightSelectionProcessor(),
             HighlightSearchProcessor(preview_search=True),
             HighlightMatchingBracketProcessor(),
         ]
 
-        self.buffer_window = Window(content=BufferControl(
-            buffer_name=DEFAULT_BUFFER,
-            input_processors=input_processors))
+        self.buffer_window = Window(
+            content=BufferControl(
+                buffer_name=DEFAULT_BUFFER,
+                lexer=pager.lexer,
+                input_processors=input_processors))
 
         # Build an interface.
         self.container = FloatContainer(

@@ -3,6 +3,7 @@
 pypager: A pure Python pager application.
 """
 from __future__ import unicode_literals
+from prompt_toolkit.layout.lexers import PygmentsLexer
 from pypager.pager import Pager
 from pypager.source import PipeSource
 import sys
@@ -25,7 +26,10 @@ def run():
         args = parser.parse_args()
 
         with codecs.open(args.filename, 'rb', encoding='utf-8', errors='ignore') as f:
-            pager = Pager(PipeSource(fileno=f.fileno()))
+            # When a filename is given, take a lexer from that filename.
+            lexer = PygmentsLexer.from_filename(args.filename, sync_from_start=False)
+
+            pager = Pager(PipeSource(fileno=f.fileno()), lexer=lexer)
             pager.run()
 
 

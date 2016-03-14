@@ -21,6 +21,7 @@ setup(
     packages=find_packages('.'),
     install_requires = [
         'prompt_toolkit==0.59',
+        'pygments',
     ],
     entry_points={
         'console_scripts': [

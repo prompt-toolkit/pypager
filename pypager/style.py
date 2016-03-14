@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.styles.from_dict import style_from_dict
+from prompt_toolkit.styles.from_pygments import style_from_pygments
 from prompt_toolkit.token import Token
 from prompt_toolkit.styles import Attrs, Style
 
@@ -34,7 +34,7 @@ class PypagerStyle(Style):
     """
     # NOTE: (Actually: this is taken literally from pymux.)
     def __init__(self):
-        self.ui_style = style_from_dict(ui_style)
+        self.ui_style = style_from_pygments(style_dict=ui_style)
 
     def get_attrs_for_token(self, token):
         if token and token[0] == 'C':
