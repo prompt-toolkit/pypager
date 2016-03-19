@@ -43,6 +43,7 @@ class Pager(object):
         self.lexer = lexer
         self.vi_mode = vi_mode
         self.vi_state = ViState()
+        self.highlight_search = True
 
         # When this is True, always make sure that the cursor goes to the
         # bottom of the visible content. This is similar to 'tail -f'.

@@ -118,6 +118,11 @@ def create_key_bindings(pager):
             ~event.cli.search_state, include_current_position=False,
             count=event.arg)
 
+    @handle(Keys.Escape, 'u')
+    def _(event):
+        " Toggle search highlighting. "
+        pager.highlight_search = not pager.highlight_search
+
     @handle('g', filter=default_focus)
     @handle('<', filter=default_focus)
     @handle(Keys.Escape, '<', filter=default_focus)
@@ -170,6 +175,12 @@ def create_key_bindings(pager):
         " Forward forever, like 'tail -f'. "
         pager.forward_forever = True
 
+    @handle(Keys.ControlR)
+    @handle('r')
+    @handle('R')
+    def _(event):
+        event.cli.renderer.clear()
+
     def search_buffer_is_empty(cli):
         " Returns True when the search buffer is empty. "
         return cli.buffers[SEARCH_BUFFER].text == ''
@@ -182,6 +193,7 @@ def create_key_bindings(pager):
         event.cli.buffers[SEARCH_BUFFER].reset()
 
     @handle(Keys.Left, filter=default_focus)
+    @handle(Keys.Escape, '(', filter=default_focus)
     def _(event):
         " Scroll half page to the left. "
         w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)
@@ -199,6 +211,7 @@ def create_key_bindings(pager):
             w.horizontal_scroll = max(0, w.horizontal_scroll - amount)
 
     @handle(Keys.Right, filter=default_focus)
+    @handle(Keys.Escape, ')', filter=default_focus)
     def _(event):
         " Scroll half page to the right. "
         w = find_window_for_buffer_name(event.cli, event.cli.current_buffer_name)

@@ -51,7 +51,10 @@ class Layout(object):
             ),
             TabsProcessor(),
             HighlightSelectionProcessor(),
-            HighlightSearchProcessor(preview_search=True),
+            ConditionalProcessor(
+                processor=HighlightSearchProcessor(preview_search=True),
+                filter=Condition(lambda cli: pager.highlight_search),
+            ),
             HighlightMatchingBracketProcessor(),
         ]
 
