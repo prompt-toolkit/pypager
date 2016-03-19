@@ -9,6 +9,17 @@ long_description = open(
     )
 ).read()
 
+install_requires = [
+    'prompt_toolkit==0.60',
+    'pygments',
+]
+
+# Argparse became part of the standard library in Python 2.7
+# Include for older versions.
+try:
+    import argparse
+except ImportError:
+    install_requires += ['argparse']
 
 setup(
     name='pypager',
@@ -19,10 +30,7 @@ setup(
     description='Pure Python pager (like "more" and "less").',
     long_description=long_description,
     packages=find_packages('.'),
-    install_requires = [
-        'prompt_toolkit==0.60',
-        'pygments',
-    ],
+    install_requires=install_requires,
     entry_points={
         'console_scripts': [
             'pypager = pypager.entry_points.run_pypager:run',
