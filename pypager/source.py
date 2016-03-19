@@ -10,11 +10,13 @@ from prompt_toolkit.styles import Attrs
 from prompt_toolkit.terminal.vt100_output import FG_ANSI_COLORS, BG_ANSI_COLORS
 from prompt_toolkit.terminal.vt100_output import _256_colors as _256_colors_table
 import types
+import six
 
 __all__ = (
     'Source',
     'PipeSource',
     'GeneratorSource',
+    'StringSource',
 )
 
 
@@ -247,3 +249,27 @@ class GeneratorSource(Source):
         except StopIteration:
             self._eof = True
             return []
+
+
+class StringSource(Source):
+    """
+    Take a Python string is input for the pager.
+    """
+    def __init__(self, text):
+        assert isinstance(text, six.text_type)
+
+        self.text = text
+        self._read = False
+
+    def get_fd(self):
+        return None
+
+    def eof(self):
+        return self._read
+
+    def read_chunk(self):
+        if self._read:
+            return []
+        else:
+            self._read = True
+            return explode_tokens([(Token, self.text)])

@@ -123,6 +123,22 @@ def create_key_bindings(pager):
         " Toggle search highlighting. "
         pager.highlight_search = not pager.highlight_search
 
+    @handle('h')
+    @handle('H')
+    def _(event):
+        " Display Help. "
+        from .pager import Pager
+        from .source import StringSource
+        from .help import HELP
+        from pygments.lexers.markup import RstLexer
+        from prompt_toolkit.layout.lexers import PygmentsLexer
+
+        def display_help():
+            source = StringSource(HELP)
+            pager = Pager(source, lexer=PygmentsLexer(RstLexer))
+            pager.run()
+        event.cli.run_in_terminal(display_help)
+
     @handle('g', filter=default_focus)
     @handle('<', filter=default_focus)
     @handle(Keys.Escape, '<', filter=default_focus)
@@ -175,9 +191,9 @@ def create_key_bindings(pager):
         " Forward forever, like 'tail -f'. "
         pager.forward_forever = True
 
-    @handle(Keys.ControlR)
-    @handle('r')
-    @handle('R')
+    @handle(Keys.ControlR, filter=default_focus)
+    @handle('r', filter=default_focus)
+    @handle('R', filter=default_focus)
     def _(event):
         event.cli.renderer.clear()
 
