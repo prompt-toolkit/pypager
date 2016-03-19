@@ -15,13 +15,18 @@ def create_style():
 ui_style = {
     # Standout is caused by man pages that insert a x\b in the output.
     Token.Standout: 'bold #44aaff',
-    Token.Standout2: 'underline #888888',
+    Token.Standout2: 'underline #aa8844',
 
     # UI style
     Token.Titlebar: 'bg:#333333 #aaaaaa',
     Token.Titlebar.CursorPosition: 'bold #ffffff',
 
     Token.Arg: 'reverse #ccaa00',
+
+    Token.Toolbar.Search: 'bg:#333333 #ffffff',
+    Token.Toolbar.Search.Text: '#ffffff',
+    Token.Toolbar.System: 'bg:#333333 #ffffff',
+    Token.Toolbar.System.Text: '#ffffff',
 }
 
 

@@ -10,6 +10,7 @@ from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.input import StdinInput
 from prompt_toolkit.interface import CommandLineInterface
+from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.utils import Callback
 
@@ -31,12 +32,17 @@ class Pager(object):
         p = Pager()
         p.run()
 
-    :param
+    :param source: :class:`.Source` instance.
+    :param lexer: Prompt_toolkit `lexer` instance.
+    :param vi_mode: Enable Vi key bindings.
+    :param style: Prompt_toolkit `Style` instance.
     """
-    def __init__(self, source, lexer=None):
+    def __init__(self, source, lexer=None, vi_mode=False, style=None):
         assert isinstance(source, Source)
         self.source = source
         self.lexer = lexer
+        self.vi_mode = vi_mode
+        self.vi_state = ViState()
 
         # When this is True, always make sure that the cursor goes to the
         # bottom of the visible content. This is similar to 'tail -f'.
@@ -60,7 +66,7 @@ class Pager(object):
             layout=self.layout.container,
             buffers=self.buffers,
             key_bindings_registry=manager.registry,
-            style=create_style(),
+            style=style or create_style(),
             mouse_support=True,
             on_render=Callback(self._on_render),
             use_alternate_screen=True)

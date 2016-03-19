@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
-from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.filters import HasArg, Condition
+from prompt_toolkit.enums import DEFAULT_BUFFER, SYSTEM_BUFFER
+from prompt_toolkit.filters import HasArg, Condition, HasSearch, HasFocus
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window, ConditionalContainer, Float, FloatContainer
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
@@ -67,17 +67,19 @@ class Layout(object):
                 self.buffer_window,
                 SearchToolbar(vi_mode=True),
                 SystemToolbar(),
-                VSplit([
-                    Window(height=D.exact(1),
-                           content=TokenListControl(
-                               self._get_titlebar_left_tokens,
-                               default_char=Char(' ', Token.Titlebar))),
-                    Window(height=D.exact(1),
-                           content=TokenListControl(
-                               self._get_titlebar_right_tokens,
-                               align_right=True,
-                               default_char=Char(' ', Token.Titlebar))),
-                ]),
+                ConditionalContainer(
+                    content=VSplit([
+                            Window(height=D.exact(1),
+                                   content=TokenListControl(
+                                       self._get_titlebar_left_tokens,
+                                       default_char=Char(' ', Token.Titlebar))),
+                            Window(height=D.exact(1),
+                                   content=TokenListControl(
+                                       self._get_titlebar_right_tokens,
+                                       align_right=True,
+                                       default_char=Char(' ', Token.Titlebar))),
+                        ]),
+                    filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER))
             ]),
             floats=[
                 Float(right=0, height=1, bottom=1,

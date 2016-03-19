@@ -6,7 +6,7 @@ from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
-from prompt_toolkit.utils import suspend_to_background_supported, get_cwidth
+from prompt_toolkit.utils import suspend_to_background_supported
 
 __all__ = (
     'create_key_bindings',
@@ -14,7 +14,8 @@ __all__ = (
 
 def create_key_bindings(pager):
     manager = KeyBindingManager(
-        enable_vi_mode=False,
+        enable_vi_mode=Condition(lambda cli: pager.vi_mode),
+        get_vi_state=lambda cli: pager.vi_state,
         enable_search=True,
         enable_extra_page_navigation=True,
         enable_system_bindings=True)
@@ -70,7 +71,11 @@ def create_key_bindings(pager):
     @handle(Keys.Down, filter=default_focus)
     def _(event):
         " Scoll one line down."
-        scroll_one_line_down(event)
+        if event.arg > 1:
+            # When an argument is given, go this amount of lines down.
+            event.current_buffer.auto_down(count=event.arg)
+        else:
+            scroll_one_line_down(event)
 
     @handle('y', filter=default_focus)
     @handle('k', filter=default_focus)
@@ -80,20 +85,23 @@ def create_key_bindings(pager):
     @handle(Keys.Up, filter=default_focus)
     def _(event):
         " Scoll one line up."
-        scroll_one_line_up(event)
+        if event.arg > 1:
+            event.current_buffer.auto_up(count=event.arg)
+        else:
+            scroll_one_line_up(event)
 
     @handle('/', filter=default_focus)
     def _(event):
         " Start searching forward. "
         event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
-        # get_vi_state(event.cli).input_mode = InputMode.INSERT
+        pager.vi_state.input_mode = InputMode.INSERT
         event.cli.push_focus(SEARCH_BUFFER)
 
     @handle('?', filter=default_focus)
     def _(event):
         " Start searching backwards. "
         event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
-        # get_vi_state(event.cli).input_mode = InputMode.INSERT
+        pager.vi_state.input_mode = InputMode.INSERT
         event.cli.push_focus(SEARCH_BUFFER)
 
     @handle('n', filter=default_focus)
@@ -169,7 +177,7 @@ def create_key_bindings(pager):
     @handle(Keys.Backspace, filter=HasFocus(SEARCH_BUFFER) & Condition(search_buffer_is_empty))
     def _(event):
         " Cancel search when backspace is pressed. "
-        # get_vi_state(event.cli).input_mode = InputMode.NAVIGATION
+        pager.vi_state.input_mode = InputMode.NAVIGATION
         event.cli.pop_focus()
         event.cli.buffers[SEARCH_BUFFER].reset()
 
