@@ -21,7 +21,7 @@ def create_key_bindings(pager):
         enable_system_bindings=True)
     handle = manager.registry.add_binding
 
-    default_focus = HasFocus(DEFAULT_BUFFER)
+    default_focus = Condition(lambda cli: cli.current_buffer_name.startswith('source'))
 
     for c in '01234556789':
         @handle(c, filter=default_focus)
@@ -134,8 +134,8 @@ def create_key_bindings(pager):
         from prompt_toolkit.layout.lexers import PygmentsLexer
 
         def display_help():
-            source = StringSource(HELP)
-            pager = Pager(source, lexer=PygmentsLexer(RstLexer))
+            source = StringSource(HELP, lexer=PygmentsLexer(RstLexer))
+            pager = Pager([source])
             pager.run()
         event.cli.run_in_terminal(display_help)
 

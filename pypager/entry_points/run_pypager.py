@@ -39,7 +39,8 @@ def run():
             # When a filename is given, take a lexer from that filename.
             lexer = PygmentsLexer.from_filename(args.filename, sync_from_start=False)
 
-            pager = Pager(PipeSource(fileno=f.fileno()), lexer=lexer, vi_mode=vi_mode)
+            sources = [PipeSource(fileno=f.fileno(), lexer=lexer)]
+            pager = Pager(sources, vi_mode=vi_mode)
             pager.run()
 
 

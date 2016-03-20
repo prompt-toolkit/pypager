@@ -3,12 +3,15 @@ Input source for a pager.
 (pipe or generator.)
 """
 from __future__ import unicode_literals
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 from prompt_toolkit.token import Token
 from prompt_toolkit.eventloop.posix_utils import PosixStdinReader
 from prompt_toolkit.layout.utils import explode_tokens
 from prompt_toolkit.styles import Attrs
 from prompt_toolkit.terminal.vt100_output import FG_ANSI_COLORS, BG_ANSI_COLORS
 from prompt_toolkit.terminal.vt100_output import _256_colors as _256_colors_table
+from prompt_toolkit.layout.lexers import Lexer
 import types
 import six
 
@@ -20,13 +23,19 @@ __all__ = (
 )
 
 
-class Source(object):
+class Source(with_metaclass(ABCMeta, object)):
+    #: The lexer to be used in the layout.
+    lexer = None
+
+    @abstractmethod
     def get_fd(self):
         " Wait until this fd is ready. Returns None if we should'nt wait. "
 
+    @abstractmethod
     def eof(self):
         " Return True when we reached the end of the input. "
 
+    @abstractmethod
     def read_chunk(self):
         " Read data from input. Return a list of token/text tuples. "
 
@@ -36,8 +45,12 @@ class PipeSource(Source):
     When input is read from another process that is chained to use through a
     unix pipe.
     """
-    def __init__(self, fileno):
+    def __init__(self, fileno, lexer=None):
+        assert isinstance(fileno, int)
+        assert lexer is None or isinstance(lexer, Lexer)
+
         self.fileno = fileno
+        self.lexer = lexer
 
         self._line_tokens = []
         self._eof = False
@@ -231,10 +244,13 @@ class GeneratorSource(Source):
     """
     When the input is coming from a Python generator.
     """
-    def __init__(self, generator):
+    def __init__(self, generator, lexer=None):
         assert isinstance(generator, types.GeneratorType)
+        assert lexer is None or isinstance(lexer, Lexer)
+
         self._eof = False
         self.generator = generator
+        self.lexer = lexer
 
     def get_fd(self):
         return None
@@ -255,10 +271,12 @@ class StringSource(Source):
     """
     Take a Python string is input for the pager.
     """
-    def __init__(self, text):
+    def __init__(self, text, lexer):
         assert isinstance(text, six.text_type)
+        assert lexer is None or isinstance(lexer, Lexer)
 
         self.text = text
+        self.lexer = lexer
         self._read = False
 
     def get_fd(self):
