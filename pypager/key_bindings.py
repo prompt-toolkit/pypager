@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from prompt_toolkit.enums import DEFAULT_BUFFER, SEARCH_BUFFER, IncrementalSearchDirection
+from prompt_toolkit.enums import SEARCH_BUFFER, IncrementalSearchDirection
 from prompt_toolkit.filters import HasFocus, Condition
 from prompt_toolkit.key_binding.bindings.scroll import scroll_page_up, scroll_page_down, scroll_one_line_down, scroll_one_line_up, scroll_half_page_up, scroll_half_page_down
 from prompt_toolkit.key_binding.manager import KeyBindingManager
@@ -7,6 +7,8 @@ from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.utils import suspend_to_background_supported
+
+from .filters import HasColon
 
 __all__ = (
     'create_key_bindings',
@@ -21,7 +23,10 @@ def create_key_bindings(pager):
         enable_system_bindings=True)
     handle = manager.registry.add_binding
 
-    default_focus = Condition(lambda cli: cli.current_buffer_name.startswith('source'))
+    has_colon = HasColon(pager)
+    default_focus = (
+        Condition(lambda cli: cli.current_buffer_name.startswith('source')) &
+        ~has_colon)
 
     for c in '01234556789':
         @handle(c, filter=default_focus)
@@ -123,8 +128,8 @@ def create_key_bindings(pager):
         " Toggle search highlighting. "
         pager.highlight_search = not pager.highlight_search
 
-    @handle('h')
-    @handle('H')
+    @handle('h', filter=default_focus)
+    @handle('H', filter=default_focus)
     def _(event):
         " Display Help. "
         from .pager import Pager
@@ -249,6 +254,29 @@ def create_key_bindings(pager):
 
             # Scroll.
             w.horizontal_scroll = max(0, w.horizontal_scroll + amount)
+
+    @handle(':', filter=default_focus)
+    def _(event):
+        pager.in_colon_mode = True
+
+    @handle('n', filter=has_colon)
+    def _(event):
+        " Go to next file. "
+        pager.current_source = (pager.current_source + 1) % len(pager.sources)
+        pager.buffers.focus(event.cli, pager.source_to_buffer_name[pager.source])
+        pager.in_colon_mode = False
+
+    @handle('p', filter=has_colon)
+    def _(event):
+        " Go to previous file. "
+        pager.current_source = (pager.current_source - 1) % len(pager.sources)
+        pager.buffers.focus(event.cli, pager.source_to_buffer_name[pager.source])
+        pager.in_colon_mode = False
+
+    @handle(Keys.Any, filter=has_colon)
+    @handle(Keys.Backspace, filter=has_colon)
+    def _(event):
+        pager.in_colon_mode = False
 
     @handle(Keys.ControlZ, filter=Condition(lambda cli: suspend_to_background_supported()))
     def _(event):

@@ -6,8 +6,10 @@ from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
 from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation, ConditionalProcessor
 from prompt_toolkit.layout.screen import Char
-from prompt_toolkit.layout.toolbars import SearchToolbar, SystemToolbar
+from prompt_toolkit.layout.toolbars import SearchToolbar, SystemToolbar, TokenListToolbar
 from prompt_toolkit.token import Token
+
+from .filters import HasColon
 
 import weakref
 
@@ -102,6 +104,8 @@ class Layout(object):
         self.dynamic_body = _DynamicBody(pager)
 
         # Build an interface.
+        has_colon = HasColon(pager)
+
         self.container = FloatContainer(
             content=HSplit([
                 self.dynamic_body,
@@ -119,7 +123,12 @@ class Layout(object):
                                        align_right=True,
                                        default_char=Char(' ', Token.Titlebar))),
                         ]),
-                    filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER))
+                    filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER) & ~has_colon),
+                ConditionalContainer(
+                    content=TokenListToolbar(
+                        lambda cli: [(Token.Titlebar, ' :')],
+                        default_char=Char(token=Token.Titlebar)),
+                    filter=has_colon),
             ]),
             floats=[
                 Float(right=0, height=1, bottom=1,
