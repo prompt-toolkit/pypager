@@ -5,10 +5,10 @@ from prompt_toolkit.key_binding.bindings.scroll import scroll_page_up, scroll_pa
 from prompt_toolkit.key_binding.manager import KeyBindingManager
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.layout.utils import find_window_for_buffer_name
 from prompt_toolkit.utils import suspend_to_background_supported
 
-from .filters import HasColon
 
 __all__ = (
     'create_key_bindings',
@@ -23,22 +23,33 @@ def create_key_bindings(pager):
         enable_system_bindings=True)
     handle = manager.registry.add_binding
 
-    has_colon = HasColon(pager)
-    default_focus = (
-        Condition(lambda cli: cli.current_buffer_name.startswith('source')) &
-        ~has_colon)
+    @Condition
+    def has_colon(cli):
+        return pager.in_colon_mode
+
+    @Condition
+    def default_focus(cli):
+        return (cli.current_buffer_name.startswith('source') and
+                not pager.in_colon_mode)
+
+    @Condition
+    def displaying_help(cli):
+       return pager.displaying_help
 
     for c in '01234556789':
         @handle(c, filter=default_focus)
         def _(event, c=c):
             event.append_to_arg_count(c)
 
-    @handle('q', filter=default_focus)
-    @handle('Q', filter=default_focus)
+    @handle('q', filter=default_focus | has_colon)
+    @handle('Q', filter=default_focus | has_colon)
     @handle('Z', 'Z', filter=default_focus)
     def _(event):
         " Quit. "
-        event.cli.set_return_value(None)
+        if pager.displaying_help:
+            pager.quit_help()
+        else:
+            event.cli.set_return_value(None)
 
     @handle(' ', filter=default_focus)
     @handle('f', filter=default_focus)
@@ -128,21 +139,18 @@ def create_key_bindings(pager):
         " Toggle search highlighting. "
         pager.highlight_search = not pager.highlight_search
 
-    @handle('h', filter=default_focus)
-    @handle('H', filter=default_focus)
+    @handle('=', filter=default_focus)
+    @handle(Keys.ControlG, filter=default_focus)
+    @handle('f', filter=has_colon)
+    def _(event):
+        " Print the current file name. "
+        pager.message = ' {} '.format(pager.source.get_name())
+
+    @handle('h', filter=default_focus & ~displaying_help)
+    @handle('H', filter=default_focus & ~displaying_help)
     def _(event):
         " Display Help. "
-        from .pager import Pager
-        from .source import StringSource
-        from .help import HELP
-        from pygments.lexers.markup import RstLexer
-        from prompt_toolkit.layout.lexers import PygmentsLexer
-
-        def display_help():
-            source = StringSource(HELP, lexer=PygmentsLexer(RstLexer))
-            pager = Pager([source])
-            pager.run()
-        event.cli.run_in_terminal(display_help)
+        pager.display_help()
 
     @handle('g', filter=default_focus)
     @handle('<', filter=default_focus)
@@ -255,28 +263,41 @@ def create_key_bindings(pager):
             # Scroll.
             w.horizontal_scroll = max(0, w.horizontal_scroll + amount)
 
-    @handle(':', filter=default_focus)
+    @handle(':', filter=default_focus & ~displaying_help)
     def _(event):
         pager.in_colon_mode = True
 
     @handle('n', filter=has_colon)
     def _(event):
         " Go to next file. "
-        pager.current_source = (pager.current_source + 1) % len(pager.sources)
-        pager.buffers.focus(event.cli, pager.source_to_buffer_name[pager.source])
-        pager.in_colon_mode = False
+        pager.focus_next_source()
 
     @handle('p', filter=has_colon)
     def _(event):
         " Go to previous file. "
-        pager.current_source = (pager.current_source - 1) % len(pager.sources)
-        pager.buffers.focus(event.cli, pager.source_to_buffer_name[pager.source])
+        pager.focus_previous_source()
+
+    @handle('e', filter=has_colon)
+    @handle(Keys.ControlX, Keys.ControlV, filter=default_focus)
+    def _(event):
+        pager.buffers.focus(event.cli, 'EXAMINE')
         pager.in_colon_mode = False
+
+    @handle('d', filter=has_colon)
+    def _(event):
+        pager.remove_current_source()
 
     @handle(Keys.Any, filter=has_colon)
     @handle(Keys.Backspace, filter=has_colon)
     def _(event):
         pager.in_colon_mode = False
+        pager.message = 'No command.'
+
+    @handle(Keys.ControlC, filter=HasFocus('EXAMINE'))
+    @handle(Keys.ControlG, filter=HasFocus('EXAMINE'))
+    def _(event):
+        " Cancel 'Examine' input. "
+        pager.buffers.focus(event.cli, pager.source_info[pager.source].buffer_name)
 
     @handle(Keys.ControlZ, filter=Condition(lambda cli: suspend_to_background_supported()))
     def _(event):

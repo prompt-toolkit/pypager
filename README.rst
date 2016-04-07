@@ -16,13 +16,13 @@ What is a pager?
 A pager is a terminal program that can be used to view the content of a file,
 or the output stream from another application.
 
-For instance, when running ``man vim``, the actual content is displayed in a
+For instance, when we run ``man vim``, the actual content is displayed in a
 pager, according to the ``$PAGER`` environment variable.
 
 Important for a pager is that the input can be streamed. For instance when we
 have ``find / | pypager``; we don't want to wait for the whole file system to
-be traversed, before displaying anything. Data is read from the input pipe,
-when it needs to be displayed.
+be traversed, before displaying anything. Data is only read from the input
+pipe, when it needs to be displayed.
 
 Popular pager applications are ``more``, ``less`` and ``most``.
 

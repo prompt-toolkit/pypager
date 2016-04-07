@@ -27,6 +27,12 @@ ui_style = {
     Token.Toolbar.Search.Text: '#ffffff',
     Token.Toolbar.System: 'bg:#333333 #ffffff',
     Token.Toolbar.System.Text: '#ffffff',
+
+    Token.Toolbar.Examine: 'bg:#333333 #ffffff',
+    Token.Toolbar.Examine.Text: 'bg:#aa88ff #000000',
+
+    # Messages
+    Token.Message:                'bg:#bbee88 #222222',
 }
 
 

@@ -14,6 +14,8 @@ from prompt_toolkit.terminal.vt100_output import _256_colors as _256_colors_tabl
 from prompt_toolkit.layout.lexers import Lexer
 import types
 import six
+import codecs
+import os
 
 __all__ = (
     'Source',
@@ -32,6 +34,10 @@ class Source(with_metaclass(ABCMeta, object)):
         " Wait until this fd is ready. Returns None if we should'nt wait. "
 
     @abstractmethod
+    def get_name(self):
+        " Return the filename or name for this input. "
+
+    @abstractmethod
     def eof(self):
         " Return True when we reached the end of the input. "
 
@@ -39,30 +45,39 @@ class Source(with_metaclass(ABCMeta, object)):
     def read_chunk(self):
         " Read data from input. Return a list of token/text tuples. "
 
+    def close(self):
+        pass
+
 
 class PipeSource(Source):
     """
     When input is read from another process that is chained to use through a
     unix pipe.
     """
-    def __init__(self, fileno, lexer=None):
+    def __init__(self, fileno, lexer=None, name='<stdin>'):
         assert isinstance(fileno, int)
         assert lexer is None or isinstance(lexer, Lexer)
+        assert isinstance(name, six.text_type)
 
         self.fileno = fileno
         self.lexer = lexer
+        self.name = name
 
         self._line_tokens = []
         self._eof = False
 
         # Default style attributes.
-        self._attrs = Attrs(color=None, bgcolor=None, bold=False,
-                            underline=False, italic=False, blink=False, reverse=False)
+        self._attrs = Attrs(
+            color=None, bgcolor=None, bold=False, underline=False,
+            italic=False, blink=False, reverse=False)
 
         # Start input parser.
         self._parser = self._parse_corot()
         next(self._parser)
         self._stdin_reader = PosixStdinReader(fileno)
+
+    def get_name(self):
+        return self.name
 
     def get_fd(self):
         return self.fileno
@@ -199,8 +214,9 @@ class PipeSource(Source):
                 replace["reverse"] = False
             elif not attr:
                 replace = {}
-                self._attrs = Attrs(color=None, bgcolor=None, bold=False,
-                                    underline=False, italic=False, blink=False, reverse=False)
+                self._attrs = Attrs(
+                    color=None, bgcolor=None, bold=False, underline=False,
+                    italic=False, blink=False, reverse=False)
 
             elif attr in (38, 48):
                 n = attrs.pop()
@@ -229,6 +245,19 @@ class PipeSource(Source):
         self._attrs = self._attrs._replace(**replace)
 
 
+class FileSource(PipeSource):
+    def __init__(self, filename, lexer=None):
+        self.fp =  codecs.open(
+            os.path.expanduser(filename),
+            'rb', encoding='utf-8', errors='ignore')
+
+        super(FileSource, self).__init__(
+            self.fp.fileno(), lexer=lexer, name=filename)
+
+    def close(self):
+        self.fp.close()
+
+
 # Mapping of the ANSI color codes to their names.
 _fg_colors = dict((v, k) for k, v in FG_ANSI_COLORS.items())
 _bg_colors = dict((v, k) for k, v in BG_ANSI_COLORS.items())
@@ -244,13 +273,18 @@ class GeneratorSource(Source):
     """
     When the input is coming from a Python generator.
     """
-    def __init__(self, generator, lexer=None):
+    def __init__(self, generator, lexer=None, name=''):
         assert isinstance(generator, types.GeneratorType)
         assert lexer is None or isinstance(lexer, Lexer)
+        assert isinstance(name, six.text_type)
 
         self._eof = False
         self.generator = generator
         self.lexer = lexer
+        self.name = name
+
+    def get_name(self):
+        return self.name
 
     def get_fd(self):
         return None
@@ -271,13 +305,17 @@ class StringSource(Source):
     """
     Take a Python string is input for the pager.
     """
-    def __init__(self, text, lexer):
+    def __init__(self, text, lexer, name=''):
         assert isinstance(text, six.text_type)
         assert lexer is None or isinstance(lexer, Lexer)
 
         self.text = text
         self.lexer = lexer
+        self.name = name
         self._read = False
+
+    def get_name(self):
+        return self.name
 
     def get_fd(self):
         return None

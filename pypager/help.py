@@ -9,7 +9,7 @@ SUMMARY OF COMMANDS
 
 ------------------------------------------------------
 
-Moving 
+Moving
 ------
 
  e  ^E  j  ^N  CR   Forward one line.
@@ -46,4 +46,14 @@ JUMPING
     Certain marks are predefined.
         ^  means  beginning of the file
         $  means  end of the file
+
+CHANGING FILES
+--------------
+
+  :e                Examine a new file.
+  ^E^V              Same as :e.
+  :n                Examine the next file from the command line.
+  :p                Examine the previous file from the command line.
+  :d                Delete the current file from the command line list.
+  =  ^G  :f         Print current file name.
 """

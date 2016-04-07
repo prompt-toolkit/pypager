@@ -5,7 +5,7 @@ pypager: A pure Python pager application.
 from __future__ import unicode_literals
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from pypager.pager import Pager
-from pypager.source import PipeSource
+from pypager.source import FileSource
 
 import argparse
 import codecs
@@ -35,25 +35,17 @@ def run():
         if args.vi: vi_mode = True
         if args.emacs: vi_mode = False
 
-        try:
-            # Open files.
-            fds = []
-            sources = []
-            for filename in args.filename:
-                f = codecs.open(filename, 'rb', encoding='utf-8', errors='ignore')
-                fds.append(f)
+        pager = Pager(vi_mode=vi_mode)
 
-                # When a filename is given, take a lexer from that filename.
-                lexer = PygmentsLexer.from_filename(filename, sync_from_start=False)
+        # Open files.
+        for filename in args.filename:
+            # When a filename is given, take a lexer from that filename.
+            lexer = PygmentsLexer.from_filename(filename, sync_from_start=False)
 
-                sources.append(PipeSource(fileno=f.fileno(), lexer=lexer))
+            pager.add_source(FileSource(filename, lexer=lexer))
 
-            # Run UI.
-            pager = Pager(sources, vi_mode=vi_mode)
-            pager.run()
-        finally:
-            for f in fds:
-                f.close()
+        # Run UI.
+        pager.run()
 
 
 if __name__ == '__main__':

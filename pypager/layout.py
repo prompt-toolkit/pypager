@@ -4,8 +4,10 @@ from prompt_toolkit.filters import HasArg, Condition, HasSearch, HasFocus
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window, ConditionalContainer, Float, FloatContainer, Container
 from prompt_toolkit.layout.controls import BufferControl, TokenListControl
 from prompt_toolkit.layout.dimension import LayoutDimension as D
-from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation, ConditionalProcessor
+from prompt_toolkit.layout.menus import MultiColumnCompletionsMenu
+from prompt_toolkit.layout.processors import Processor, HighlightSelectionProcessor, HighlightSearchProcessor, HighlightMatchingBracketProcessor, TabsProcessor, Transformation, ConditionalProcessor, BeforeInput
 from prompt_toolkit.layout.screen import Char
+from prompt_toolkit.layout.lexers import SimpleLexer
 from prompt_toolkit.layout.toolbars import SearchToolbar, SystemToolbar, TokenListToolbar
 from prompt_toolkit.token import Token
 
@@ -43,6 +45,24 @@ class _Arg(ConditionalContainer):
                 filter=HasArg())
 
 
+class MessageToolbarBar(ConditionalContainer):
+    """
+    Pop-up (at the bottom) for showing error/status messages.
+    """
+    def __init__(self, pager):
+        def get_tokens(cli):
+            if pager.message:
+                return [(Token.Message, pager.message)]
+            else:
+                return []
+
+        super(MessageToolbarBar, self).__init__(
+            content=TokenListToolbar(
+                get_tokens,
+                filter=Condition(lambda cli: pager.message is not None)),
+            filter=Condition(lambda cli: bool(pager.message)))
+
+
 class _DynamicBody(Container):
     def __init__(self, pager):
         self.pager = pager
@@ -68,8 +88,9 @@ class _DynamicBody(Container):
             ]
 
             buffer_window = Window(
+                always_hide_cursor=True,
                 content=BufferControl(
-                    buffer_name=self.pager.source_to_buffer_name[source],
+                    buffer_name=self.pager.source_info[source].buffer_name,
                     lexer=source.lexer,
                     input_processors=input_processors))
 
@@ -123,16 +144,32 @@ class Layout(object):
                                        align_right=True,
                                        default_char=Char(' ', Token.Titlebar))),
                         ]),
-                    filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER) & ~has_colon),
+                    filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER) & ~has_colon & ~HasFocus('EXAMINE')),
                 ConditionalContainer(
                     content=TokenListToolbar(
                         lambda cli: [(Token.Titlebar, ' :')],
                         default_char=Char(token=Token.Titlebar)),
                     filter=has_colon),
+                ConditionalContainer(
+                    content=Window(
+                        BufferControl(
+                            buffer_name='EXAMINE',
+                            default_char=Char(token=Token.Toolbar.Examine),
+                            lexer=SimpleLexer(default_token=Token.Toolbar.Examine.Text),
+                            input_processors=[
+                                BeforeInput(lambda cli: [(Token.Toolbar.Examine, ' Examine: ')]),
+                            ]),
+                        height=D.exact(1)),
+                    filter=HasFocus('EXAMINE')),
             ]),
             floats=[
                 Float(right=0, height=1, bottom=1,
                       content=_Arg()),
+                Float(bottom=1, left=0, right=0, height=1,
+                      content=MessageToolbarBar(pager)),
+                Float(xcursor=True,
+                      ycursor=True,
+                      content=MultiColumnCompletionsMenu()),
             ]
         )
 
@@ -141,12 +178,14 @@ class Layout(object):
         return self.dynamic_body.get_buffer_window()
 
     def _get_titlebar_left_tokens(self, cli):
-        return [
-            (Token.Titlebar, ' (press h for help or q to quit)'),
-        ]
+        if self.pager.displaying_help:
+            message = ' HELP -- Press q when done'
+        else:
+            message = ' (press h for help or q to quit)'
+        return [(Token.Titlebar, message)]
 
     def _get_titlebar_right_tokens(self, cli):
-        buffer = self.pager.source_to_buffer[self.pager.source]
+        buffer = self.pager.source_info[self.pager.source].buffer
         document = buffer.document
         row = document.cursor_position_row + 1
         col = document.cursor_position_col + 1
