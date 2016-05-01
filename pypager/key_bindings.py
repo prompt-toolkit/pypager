@@ -16,8 +16,6 @@ __all__ = (
 
 def create_key_bindings(pager):
     manager = KeyBindingManager(
-        enable_vi_mode=Condition(lambda cli: pager.vi_mode),
-        get_vi_state=lambda cli: pager.vi_state,
         enable_search=True,
         enable_extra_page_navigation=True,
         enable_system_bindings=True)
@@ -110,14 +108,14 @@ def create_key_bindings(pager):
     def _(event):
         " Start searching forward. "
         event.cli.search_state.direction = IncrementalSearchDirection.FORWARD
-        pager.vi_state.input_mode = InputMode.INSERT
+        event.cli.vi_state.input_mode = InputMode.INSERT
         event.cli.push_focus(SEARCH_BUFFER)
 
     @handle('?', filter=default_focus)
     def _(event):
         " Start searching backwards. "
         event.cli.search_state.direction = IncrementalSearchDirection.BACKWARD
-        pager.vi_state.input_mode = InputMode.INSERT
+        event.cli.vi_state.input_mode = InputMode.INSERT
         event.cli.push_focus(SEARCH_BUFFER)
 
     @handle('n', filter=default_focus)
@@ -217,7 +215,7 @@ def create_key_bindings(pager):
     @handle(Keys.Backspace, filter=HasFocus(SEARCH_BUFFER) & Condition(search_buffer_is_empty))
     def _(event):
         " Cancel search when backspace is pressed. "
-        pager.vi_state.input_mode = InputMode.NAVIGATION
+        event.cli.vi_state.input_mode = InputMode.NAVIGATION
         event.cli.pop_focus()
         event.cli.buffers[SEARCH_BUFFER].reset()
 

@@ -12,13 +12,12 @@ from prompt_toolkit.buffer import Buffer, AcceptAction
 from prompt_toolkit.buffer_mapping import BufferMapping
 from prompt_toolkit.contrib.completers import PathCompleter
 from prompt_toolkit.document import Document
+from prompt_toolkit.enums import EditingMode
 from prompt_toolkit.input import StdinInput
 from prompt_toolkit.interface import CommandLineInterface
-from prompt_toolkit.key_binding.vi_state import ViState
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.shortcuts import create_eventloop
 from prompt_toolkit.styles import Style
-from prompt_toolkit.utils import Callback
 
 from .help import HELP
 from .key_bindings import create_key_bindings
@@ -75,7 +74,6 @@ class Pager(object):
         self.sources = []
         self.current_source = 0  # Index in `self.sources`.
         self.vi_mode = vi_mode
-        self.vi_state = ViState()
         self.highlight_search = True
         self.in_colon_mode = False
         self.message = None
@@ -114,12 +112,27 @@ class Pager(object):
             key_bindings_registry=manager.registry,
             style=style or create_style(),
             mouse_support=True,
-            on_render=Callback(self._on_render),
-            use_alternate_screen=True)
+            on_render=self._on_render,
+            use_alternate_screen=True,
+            on_initialize=self._on_cli_initialize)
 
         self.cli = None
         self.eventloop = None
         self._waiting_for_input_stream = defaultdict(bool)  # Source -> bool
+
+    def _on_cli_initialize(self, cli):
+        """
+        Called when a CommandLineInterface has been created.
+        """
+        def synchronize(_=None):
+            if self.vi_mode:
+                cli.editing_mode = EditingMode.VI
+            else:
+                cli.editing_mode = EditingMode.EMACS
+
+        cli.input_processor.beforeKeyPress += synchronize
+        cli.input_processor.afterKeyPress += synchronize
+        synchronize()
 
     @classmethod
     def from_pipe(cls, lexer=None):
@@ -316,7 +329,7 @@ class Pager(object):
                 input=StdinInput(sys.stdout))
 
             # Hide message when a key is pressed.
-            def key_pressed():
+            def key_pressed(_):
                 self.message = None
             self.cli.input_processor.beforeKeyPress += key_pressed
 
