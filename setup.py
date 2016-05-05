@@ -10,7 +10,7 @@ long_description = open(
 ).read()
 
 install_requires = [
-    'prompt_toolkit==0.60',
+    'prompt_toolkit>=1.0.0,<1.1.0',
     'pygments',
 ]
 
