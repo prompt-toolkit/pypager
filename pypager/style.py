@@ -34,6 +34,8 @@ ui_style = {
 
     # Messages
     Token.Message:                'bg:#bbee88 #222222',
+
+    Token.Loading:  'bg:#884400 #ffffff',
 }
 
 

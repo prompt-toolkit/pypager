@@ -3,8 +3,8 @@ Pager implementation in Python.
 """
 from __future__ import unicode_literals
 import sys
+import threading
 import weakref
-from collections import defaultdict
 from pygments.lexers.markup import RstLexer
 
 from prompt_toolkit.application import Application
@@ -45,6 +45,10 @@ class _SourceInfo(object):
 
         # Marks. (Mapping from mark name to (cursor position, scroll_offset).)
         self.marks = {}
+
+        # `Pager` sets this flag when he starts reading the generator of this
+        # source in a coroutine.
+        self.waiting_for_input_stream = False
 
     @classmethod
     def _generate_buffer_name(cls):
@@ -118,7 +122,6 @@ class Pager(object):
 
         self.cli = None
         self.eventloop = None
-        self._waiting_for_input_stream = defaultdict(bool)  # Source -> bool
 
     def _on_cli_initialize(self, cli):
         """
@@ -152,6 +155,10 @@ class Pager(object):
     @property
     def line_tokens(self):
         return self.source_info[self.source].line_tokens
+
+    @property
+    def waiting_for_input_stream(self):
+        return self.source_info[self.source].waiting_for_input_stream
 
     @property
     def marks(self):
@@ -241,9 +248,10 @@ class Pager(object):
         # available.
         info = self.layout.dynamic_body.get_render_info()
         source = self.source
-        b = self.source_info[source].buffer
+        source_info = self.source_info[source]
+        b = source_info.buffer
 
-        if not self._waiting_for_input_stream[source] and not source.eof() and info:
+        if not source_info.waiting_for_input_stream and not source.eof() and info:
             lines_below_bottom = info.ui_content.line_count - info.last_visible_line()
 
             # Make sure to preload at least 2x the amount of lines on a page.
@@ -289,32 +297,37 @@ class Pager(object):
                     if lines[0] <= 0 or source.eof():
                         if fd is not None:
                             self.eventloop.remove_reader(fd)
-                        self._waiting_for_input_stream[source] = False
+                        source_info.waiting_for_input_stream = False
 
                     # Redraw.
-                    if data:
-                        self.cli.invalidate()
+                    self.cli.invalidate()
 
                 def receive_content_from_generator():
+                    " (in executor) Read data from generator. "
                     # Call `read_chunk` as long as we need more lines.
-                    data = []
                     while lines[0] > 0 and not source.eof():
                         tokens = source.read_chunk()
-                        data.extend(handle_content(tokens))
+                        data = handle_content(tokens)
+                        insert_text(data)
 
-                    # Set document.
-                    insert_text(data)
-
-                    # Redraw.
-                    if data:
+                        # Schedule redraw.
                         self.cli.invalidate()
+
+                    source_info.waiting_for_input_stream = False
+
+                # Set 'waiting_for_input_stream' and render.
+                source_info.waiting_for_input_stream = True
+                self.cli.invalidate()
 
                 # Add reader for stdin.
                 if fd is not None:
-                    self._waiting_for_input_stream[source] = True
                     self.eventloop.add_reader(fd, receive_content_from_fd)
                 else:
-                    receive_content_from_generator()
+                    # Execute receive_content_from_generator in thread.
+                    # (Don't use 'run_in_executor', because we need a daemon.
+                    t = threading.Thread(target=receive_content_from_generator)
+                    t.daemon = True
+                    t.start()
 
     def run(self):
         """

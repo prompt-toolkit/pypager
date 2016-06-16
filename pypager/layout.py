@@ -161,12 +161,29 @@ class Layout(object):
                             ]),
                         height=D.exact(1)),
                     filter=HasFocus('EXAMINE')),
+                ConditionalContainer(
+                    content=Window(
+                        BufferControl(
+                            buffer_name='PATTERN_FILTER',
+                            default_char=Char(token=Token.Toolbar.Search),
+                            lexer=SimpleLexer(default_token=Token.Toolbar.Search.Text),
+                            input_processors=[
+                                BeforeInput(lambda cli: [(Token.Toolbar.Search, '&/')]),
+                            ]),
+                        height=D.exact(1)),
+                    filter=HasFocus('PATTERN_FILTER')),
             ]),
             floats=[
                 Float(right=0, height=1, bottom=1,
                       content=_Arg()),
                 Float(bottom=1, left=0, right=0, height=1,
                       content=MessageToolbarBar(pager)),
+                Float(right=0, height=1, bottom=1,
+                      content=ConditionalContainer(
+                          content=TokenListToolbar(
+                              lambda cli: [(Token.Loading, ' Loading... ')],
+                              default_char=Char(token=Token.Titlebar)),
+                          filter=Condition(lambda cli: pager.waiting_for_input_stream))),
                 Float(xcursor=True,
                       ycursor=True,
                       content=MultiColumnCompletionsMenu()),
