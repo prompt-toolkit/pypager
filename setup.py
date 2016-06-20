@@ -24,7 +24,7 @@ except ImportError:
 setup(
     name='pypager',
     author='Jonathan Slenders',
-    version='0.1',
+    version='0.2',
     license='LICENSE',
     url='https://github.com/jonathanslenders/pypager',
     description='Pure Python pager (like "more" and "less").',
