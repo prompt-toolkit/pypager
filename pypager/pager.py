@@ -346,7 +346,8 @@ class Pager(object):
                 self.message = None
             self.cli.input_processor.beforeKeyPress += key_pressed
 
-            self.cli.run(reset_current_buffer=False)
+            with self.cli.patch_stdout_context():
+                self.cli.run(reset_current_buffer=False)
         finally:
             # Close eventloop.
             self.eventloop.close()
