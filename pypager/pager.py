@@ -70,8 +70,9 @@ class Pager(object):
     :param lexer: Prompt_toolkit `lexer` instance.
     :param vi_mode: Enable Vi key bindings.
     :param style: Prompt_toolkit `Style` instance.
+    :param search_text: `None` or the search string that is highlighted.
     """
-    def __init__(self, vi_mode=False, style=None):
+    def __init__(self, vi_mode=False, style=None, search_text=None):
         assert isinstance(vi_mode, bool)
         assert style is None or isinstance(style, Style)
 
@@ -82,6 +83,7 @@ class Pager(object):
         self.in_colon_mode = False
         self.message = None
         self.displaying_help = False
+        self.search_text = search_text
 
         # When this is True, always make sure that the cursor goes to the
         # bottom of the visible content. This is similar to 'tail -f'.
@@ -346,8 +348,13 @@ class Pager(object):
                 self.message = None
             self.cli.input_processor.beforeKeyPress += key_pressed
 
+            def pre_run():
+                # Set search highlighting.
+                if self.search_text:
+                    self.cli.search_state.text = self.search_text
+
             with self.cli.patch_stdout_context():
-                self.cli.run(reset_current_buffer=False)
+                self.cli.run(reset_current_buffer=False, pre_run=pre_run)
         finally:
             # Close eventloop.
             self.eventloop.close()
