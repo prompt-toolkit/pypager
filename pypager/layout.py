@@ -45,21 +45,30 @@ class _Arg(ConditionalContainer):
                 filter=HasArg())
 
 
-class MessageToolbarBar(ConditionalContainer):
+class Titlebar(TokenListToolbar):
+    """
+    Displayed at the top.
+    """
+    def __init__(self, pager):
+        def get_tokens(cli):
+            return pager.titlebar_tokens
+
+        super(Titlebar, self).__init__(
+            get_tokens,
+            default_char=Char(' ', Token.Titlebar),
+            filter=Condition(lambda cli: pager.display_titlebar))
+
+
+class MessageToolbarBar(TokenListToolbar):
     """
     Pop-up (at the bottom) for showing error/status messages.
     """
     def __init__(self, pager):
         def get_tokens(cli):
-            if pager.message:
-                return [(Token.Message, pager.message)]
-            else:
-                return []
+            return [(Token.Message, pager.message)] if pager.message else []
 
         super(MessageToolbarBar, self).__init__(
-            content=TokenListToolbar(
-                get_tokens,
-                filter=Condition(lambda cli: pager.message is not None)),
+            get_tokens,
             filter=Condition(lambda cli: bool(pager.message)))
 
 
@@ -129,6 +138,7 @@ class Layout(object):
 
         self.container = FloatContainer(
             content=HSplit([
+                Titlebar(pager),
                 self.dynamic_body,
                 SearchToolbar(vi_mode=True),
                 SystemToolbar(),
@@ -136,19 +146,19 @@ class Layout(object):
                     content=VSplit([
                             Window(height=D.exact(1),
                                    content=TokenListControl(
-                                       self._get_titlebar_left_tokens,
-                                       default_char=Char(' ', Token.Titlebar))),
+                                       self._get_statusbar_left_tokens,
+                                       default_char=Char(' ', Token.Statusbar))),
                             Window(height=D.exact(1),
                                    content=TokenListControl(
-                                       self._get_titlebar_right_tokens,
+                                       self._get_statusbar_right_tokens,
                                        align_right=True,
-                                       default_char=Char(' ', Token.Titlebar))),
+                                       default_char=Char(' ', Token.Statusbar))),
                         ]),
                     filter=~HasSearch() & ~HasFocus(SYSTEM_BUFFER) & ~has_colon & ~HasFocus('EXAMINE')),
                 ConditionalContainer(
                     content=TokenListToolbar(
-                        lambda cli: [(Token.Titlebar, ' :')],
-                        default_char=Char(token=Token.Titlebar)),
+                        lambda cli: [(Token.Statusbar, ' :')],
+                        default_char=Char(token=Token.Statusbar)),
                     filter=has_colon),
                 ConditionalContainer(
                     content=Window(
@@ -182,7 +192,7 @@ class Layout(object):
                       content=ConditionalContainer(
                           content=TokenListToolbar(
                               lambda cli: [(Token.Loading, ' Loading... ')],
-                              default_char=Char(token=Token.Titlebar)),
+                              default_char=Char(token=Token.Statusbar)),
                           filter=Condition(lambda cli: pager.waiting_for_input_stream))),
                 Float(xcursor=True,
                       ycursor=True,
@@ -194,14 +204,20 @@ class Layout(object):
     def buffer_window(self):
         return self.dynamic_body.get_buffer_window()
 
-    def _get_titlebar_left_tokens(self, cli):
+    def _get_statusbar_left_tokens(self, cli):
+        """
+        Displayed at the bottom left.
+        """
         if self.pager.displaying_help:
             message = ' HELP -- Press q when done'
         else:
             message = ' (press h for help or q to quit)'
-        return [(Token.Titlebar, message)]
+        return [(Token.Statusbar, message)]
 
-    def _get_titlebar_right_tokens(self, cli):
+    def _get_statusbar_right_tokens(self, cli):
+        """
+        Displayed at the bottom right.
+        """
         buffer = self.pager.source_info[self.pager.source].buffer
         document = buffer.document
         row = document.cursor_position_row + 1
@@ -210,9 +226,9 @@ class Layout(object):
         if self.pager.source.eof():
             percentage = int(100 * row / document.line_count)
             return [
-                (Token.Titlebar.CursorPosition,
+                (Token.Statusbar.CursorPosition,
                  ' (%s,%s) %s%% ' % (row, col, percentage))]
         else:
             return [
-                (Token.Titlebar.CursorPosition,
+                (Token.Statusbar.CursorPosition,
                  ' (%s,%s) ' % (row, col))]

@@ -72,7 +72,8 @@ class Pager(object):
     :param style: Prompt_toolkit `Style` instance.
     :param search_text: `None` or the search string that is highlighted.
     """
-    def __init__(self, vi_mode=False, style=None, search_text=None):
+    def __init__(self, vi_mode=False, style=None, search_text=None,
+                 titlebar_tokens=None):
         assert isinstance(vi_mode, bool)
         assert style is None or isinstance(style, Style)
 
@@ -84,6 +85,8 @@ class Pager(object):
         self.message = None
         self.displaying_help = False
         self.search_text = search_text
+        self.display_titlebar = bool(titlebar_tokens)
+        self.titlebar_tokens = titlebar_tokens or []
 
         # When this is True, always make sure that the cursor goes to the
         # bottom of the visible content. This is similar to 'tail -f'.

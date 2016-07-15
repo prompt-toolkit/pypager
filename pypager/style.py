@@ -19,8 +19,8 @@ ui_style = {
     Token.Standout2: 'underline #aa8844',
 
     # UI style
-    Token.Titlebar: 'bg:#333333 #aaaaaa',
-    Token.Titlebar.CursorPosition: 'bold #ffffff',
+    Token.Statusbar: 'bg:#333333 #aaaaaa',
+    Token.Statusbar.CursorPosition: 'bold #ffffff',
 
     Token.Arg: 'reverse #ccaa00',
 
@@ -31,6 +31,8 @@ ui_style = {
 
     Token.Toolbar.Examine: 'bg:#333333 #ffffff',
     Token.Toolbar.Examine.Text: 'bg:#aa88ff #000000',
+
+    Token.Titlebar: 'bg:#333333 #ffffff',
 
     # Messages
     Token.Message:                'bg:#bbee88 #222222',
