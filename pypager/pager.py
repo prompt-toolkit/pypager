@@ -114,11 +114,11 @@ class Pager(object):
 
         self.layout = Layout(self)
 
-        manager = create_key_bindings(self)
+        registry = create_key_bindings(self)
         self.application = Application(
             layout=self.layout.container,
             buffers=self.buffers,
-            key_bindings_registry=manager.registry,
+            key_bindings_registry=registry,
             style=style or create_style(),
             mouse_support=True,
             on_render=self._on_render,

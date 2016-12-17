@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from prompt_toolkit.enums import SEARCH_BUFFER, IncrementalSearchDirection
 from prompt_toolkit.filters import HasFocus, Condition
 from prompt_toolkit.key_binding.bindings.scroll import scroll_page_up, scroll_page_down, scroll_one_line_down, scroll_one_line_up, scroll_half_page_up, scroll_half_page_down
-from prompt_toolkit.key_binding.manager import KeyBindingManager
+from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.vi_state import InputMode
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.lexers import PygmentsLexer
@@ -15,11 +15,11 @@ __all__ = (
 )
 
 def create_key_bindings(pager):
-    manager = KeyBindingManager(
+    registry = load_key_bindings(
         enable_search=True,
         enable_extra_page_navigation=True,
         enable_system_bindings=True)
-    handle = manager.registry.add_binding
+    handle = registry.add_binding
 
     @Condition
     def has_colon(cli):
@@ -302,4 +302,4 @@ def create_key_bindings(pager):
         " Suspend to bakground. "
         event.cli.suspend_to_background()
 
-    return manager
+    return registry
