@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 from setuptools import setup, find_packages
+import pypager
 
 long_description = open(
     os.path.join(
@@ -10,7 +11,7 @@ long_description = open(
 ).read()
 
 install_requires = [
-    'prompt_toolkit>=1.0.0,<1.1.0',
+    'prompt_toolkit>=2.0.0,<2.1.0',
     'pygments',
 ]
 
@@ -24,7 +25,7 @@ except ImportError:
 setup(
     name='pypager',
     author='Jonathan Slenders',
-    version='0.2',
+    version=pypager.__version__,
     license='LICENSE',
     url='https://github.com/jonathanslenders/pypager',
     description='Pure Python pager (like "more" and "less").',

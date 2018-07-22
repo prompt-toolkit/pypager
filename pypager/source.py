@@ -5,13 +5,13 @@ Input source for a pager.
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractmethod
 from six import with_metaclass
-from prompt_toolkit.token import Token
-from prompt_toolkit.eventloop.posix_utils import PosixStdinReader
-from prompt_toolkit.layout.utils import explode_tokens
+from prompt_toolkit.formatted_text import to_formatted_text
+from prompt_toolkit.input.posix_utils import PosixStdinReader
+from prompt_toolkit.layout.utils import explode_text_fragments
+from prompt_toolkit.lexers import Lexer
+from prompt_toolkit.output.vt100 import FG_ANSI_COLORS, BG_ANSI_COLORS
+from prompt_toolkit.output.vt100 import _256_colors as _256_colors_table
 from prompt_toolkit.styles import Attrs
-from prompt_toolkit.terminal.vt100_output import FG_ANSI_COLORS, BG_ANSI_COLORS
-from prompt_toolkit.terminal.vt100_output import _256_colors as _256_colors_table
-from prompt_toolkit.layout.lexers import Lexer
 import types
 import six
 import codecs
@@ -19,6 +19,7 @@ import os
 
 __all__ = (
     'Source',
+    'DummySource',
     'PipeSource',
     'GeneratorSource',
     'StringSource',
@@ -49,6 +50,30 @@ class Source(with_metaclass(ABCMeta, object)):
         pass
 
 
+class DummySource(Source):
+    """
+    Empty source.
+    """
+    def __init__(self):
+        self._r, self._w = os.pipe()
+        os.close(self._w)
+
+    def get_fd(self):
+        return self._r
+
+    def get_name(self):
+        return ''
+
+    def eof(self):
+        return True
+
+    def read_chunk(self):
+        return []
+
+    def close(self):
+        os.close(self._r)
+
+
 class PipeSource(Source):
     """
     When input is read from another process that is chained to use through a
@@ -69,7 +94,7 @@ class PipeSource(Source):
         # Default style attributes.
         self._attrs = Attrs(
             color=None, bgcolor=None, bold=False, underline=False,
-            italic=False, blink=False, reverse=False)
+            italic=False, blink=False, reverse=False, hidden=False)
 
         # Start input parser.
         self._parser = self._parse_corot()
@@ -114,7 +139,7 @@ class PipeSource(Source):
         A \b with any character before should make the next character standout.
         A \b with an underscore before should make the next character emphasized.
         """
-        token = Token
+        backspace_style = ''  # Style created by backspace characters.
         line_tokens = self._line_tokens
         replace_one_token = False
 
@@ -129,9 +154,9 @@ class PipeSource(Source):
                     line_tokens.pop()
                     replace_one_token = True
                     if last_char == '_':
-                        token = Token.Standout2
+                        backspace_style = 'class:standout2'
                     else:
-                        token = Token.Standout
+                        backspace_style = 'class:standout'
                 continue
 
             elif c == '\x1b':
@@ -158,16 +183,16 @@ class PipeSource(Source):
                             current = ''
                         elif char == 'm':
                             # Set attributes and token.
-                            self._select_graphic_rendition(params)
-                            token = ('C', ) + self._attrs
+                            self._select_graphic_rendition(params)   ### TODO: use inline style.
+                            #### token = ('C', ) + self._attrs
                             break
                         else:
                             # Ignore unspported sequence.
                             break
             else:
-                line_tokens.append((token, c))
+                line_tokens.append((self._get_attrs_style() + ' ' + backspace_style, c))
                 if replace_one_token:
-                    token = Token
+                    backspace_style = ''
 
     def _select_graphic_rendition(self, attrs):
         """
@@ -216,7 +241,7 @@ class PipeSource(Source):
                 replace = {}
                 self._attrs = Attrs(
                     color=None, bgcolor=None, bold=False, underline=False,
-                    italic=False, blink=False, reverse=False)
+                    italic=False, blink=False, reverse=False, hidden=False)
 
             elif attr in (38, 48):
                 n = attrs.pop()
@@ -243,6 +268,36 @@ class PipeSource(Source):
                             replace["bgcolor"] = color_str
 
         self._attrs = self._attrs._replace(**replace)
+
+    def _get_attrs_style(self):
+        result = []
+        attrs = self._attrs
+
+        if attrs.color:
+            result.append(' fg:{} '.format(attrs.color))
+        if attrs.bgcolor:
+            result.append(' bg:{} '.format(attrs.bgcolor))
+        if attrs.bold:
+            result.append(' bold ')
+        if attrs.italic:
+            result.append(' italic ')
+        if attrs.underline:
+            result.append(' underline ')
+        if attrs.blink:
+            result.append(' blink ')
+        if attrs.reverse:
+            result.append(' reverse ')
+
+        # Recent versions of Groff (used for man pages) use bold and underline
+        # escape sequences rather then backslash-style escape sequences. Apply
+        # the standout/standout2 styles anyway so that we get colored output.
+        # This way, people don't have to set GROFF_NO_SGR=1.
+        if attrs.bold and not attrs.color:
+            result.append(' class:standout ')
+        if attrs.underline and not attrs.color:
+            result.append(' class:standout2 ')
+
+        return ''.join(result)
 
 
 class FileSource(PipeSource):
@@ -295,7 +350,7 @@ class GeneratorSource(Source):
     def read_chunk(self):
         " Read data from input. Return a list of token/text tuples. "
         try:
-            return explode_tokens(next(self.generator))
+            return explode_text_fragments(next(self.generator))
         except StopIteration:
             self._eof = True
             return []
@@ -328,4 +383,30 @@ class StringSource(Source):
             return []
         else:
             self._read = True
-            return explode_tokens([(Token, self.text)])
+            return explode_text_fragments([('', self.text)])
+
+
+class FormattedTextSource(Source):
+    """
+    Take any kind of prompt_toolkit formatted text as input for the pager.
+    """
+    def __init__(self, formatted_text, name=''):
+        self.formatted_text = to_formatted_text(formatted_text)
+        self.name = name
+        self._read = False
+
+    def get_name(self):
+        return self.name
+
+    def get_fd(self):
+        return None
+
+    def eof(self):
+        return self._read
+
+    def read_chunk(self):
+        if self._read:
+            return []
+        else:
+            self._read = True
+            return explode_text_fragments(self.formatted_text)

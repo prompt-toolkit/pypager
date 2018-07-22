@@ -14,10 +14,10 @@ class HasColon(_PagerFilter):
     """
     The user typed a ':'.
     """
-    def __call__(self, cli):
+    def __call__(self):
         return self.pager.in_colon_mode
 
 
 class DisplayingHelp(_PagerFilter):
-    def __call__(self, cli):
+    def __call__(self):
         return self.pager.displaying_help
