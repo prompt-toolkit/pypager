@@ -3,12 +3,8 @@ import os
 from setuptools import setup, find_packages
 import pypager
 
-long_description = open(
-    os.path.join(
-        os.path.dirname(__file__),
-        'README.rst'
-    )
-).read()
+with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
+    long_description = f.read()
 
 install_requires = [
     'prompt_toolkit>=2.0.0,<2.1.0',
