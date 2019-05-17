@@ -11,17 +11,24 @@ from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.eventloop import get_event_loop
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
+from prompt_toolkit import __version__ as ptk_version
 
 from .help import HELP
 from .key_bindings import create_key_bindings
 from .layout import PagerLayout, create_buffer_window
 from .source import DummySource, FileSource, PipeSource, FormattedTextSource, Source
 from .style import ui_style
+
+PTK3 = ptk_version.startswith('3.')
+
+if PTK3:
+    from asyncio import get_event_loop
+else:
+    from prompt_toolkit.eventloop import get_event_loop
 
 __all__ = (
     'Pager',

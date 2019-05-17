@@ -3,15 +3,20 @@
 pypager: A pure Python pager application.
 """
 from __future__ import unicode_literals
-from prompt_toolkit.eventloop.defaults import set_event_loop
 from prompt_toolkit.lexers import PygmentsLexer
 from pypager.pager import Pager
 from pypager.source import FileSource
 from prompt_toolkit.utils import is_windows
+from prompt_toolkit import __version__ as ptk_version
 
 import argparse
 import os
 import sys
+
+PTK3 = ptk_version.startswith('3.')
+
+if not PTK3:
+    from prompt_toolkit.eventloop.defaults import set_event_loop
 
 __all__ = (
     'run',
@@ -19,14 +24,15 @@ __all__ = (
 
 
 def run():
-    if is_windows():
-        from prompt_toolkit.eventloop.win32 import Win32EventLoop
-        loop = Win32EventLoop()
-    else:
-        from prompt_toolkit.eventloop.posix import PosixEventLoop
-        from prompt_toolkit.eventloop.select import SelectSelector
-        loop = PosixEventLoop(selector=SelectSelector)
-    set_event_loop(loop)
+    if not PTK3:
+        if is_windows():
+            from prompt_toolkit.eventloop.win32 import Win32EventLoop
+            loop = Win32EventLoop()
+        else:
+            from prompt_toolkit.eventloop.posix import PosixEventLoop
+            from prompt_toolkit.eventloop.select import SelectSelector
+            loop = PosixEventLoop(selector=SelectSelector)
+        set_event_loop(loop)
 
     if not sys.stdin.isatty():
         pager = Pager.from_pipe()

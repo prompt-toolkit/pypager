@@ -7,7 +7,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
     long_description = f.read()
 
 install_requires = [
-    'prompt_toolkit>=2.0.0,<2.1.0',
+    'prompt_toolkit>=2.0.0,<3.1.0',
     'pygments',
 ]
 
