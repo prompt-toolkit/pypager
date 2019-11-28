@@ -9,6 +9,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
 install_requires = [
     'prompt_toolkit>=2.0.0,<3.1.0',
     'pygments',
+    'six',
 ]
 
 # Argparse became part of the standard library in Python 2.7
