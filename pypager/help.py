@@ -1,15 +1,18 @@
-from __future__ import unicode_literals
-from prompt_toolkit.formatted_text import HTML
-import prompt_toolkit
-import pypager
 import sys
+
+import prompt_toolkit
+from prompt_toolkit.formatted_text import HTML
+
+import pypager
 
 python_version = sys.version_info
 ptk_version = prompt_toolkit.__version__
 pypager_version = pypager.__version__
 
 
-HELP = HTML("""
+HELP = (
+    HTML(
+        """
             <title>SUMMARY OF COMMANDS</title>
 
  <keys> h  H             </keys> Display this help.
@@ -69,5 +72,13 @@ HELP = HTML("""
   - Python version:         <version>%s.%s.%s</version>
   - prompt_toolkit version: <version>%s</version>
 
-""") % (pypager_version, python_version[0], python_version[1],
-        python_version[2], ptk_version)
+"""
+    )
+    % (
+        pypager_version,
+        python_version[0],
+        python_version[1],
+        python_version[2],
+        ptk_version,
+    )
+)

@@ -1,59 +1,53 @@
 """
 Pager implementation in Python.
 """
-from __future__ import unicode_literals
+import asyncio
 import sys
 import threading
 import weakref
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
+from prompt_toolkit.formatted_text import StyleAndTextTuples
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.layout.layout import Layout
-from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.lexers import Lexer, PygmentsLexer
 from prompt_toolkit.styles import Style
-from prompt_toolkit import __version__ as ptk_version
 
 from .help import HELP
 from .key_bindings import create_key_bindings
 from .layout import PagerLayout, create_buffer_window
-from .source import DummySource, FileSource, PipeSource, FormattedTextSource, Source
+from .source import DummySource, FileSource, FormattedTextSource, PipeSource, Source
 from .style import ui_style
 
-PTK3 = ptk_version.startswith('3.')
+__all__ = [
+    "Pager",
+    "SourceInfo",
+]
 
-if PTK3:
-    from asyncio import get_event_loop
-else:
-    from prompt_toolkit.eventloop import get_event_loop
 
-__all__ = (
-    'Pager',
-)
-
-class _SourceInfo(object):
+class SourceInfo:
     """
     For each opened source, we keep this list of pager data.
     """
+
     _buffer_counter = 0  # Counter to generate unique buffer names.
 
-    def __init__(self, pager, source):
-        assert isinstance(pager, Pager)
-        assert isinstance(source, Source)
-
+    def __init__(self, pager: "Pager", source: Source) -> None:
         self.pager = pager
         self.source = source
 
         self.buffer = Buffer(read_only=True)
 
         # List of lines. (Each line is a list of (token, text) tuples itself.)
-        self.line_tokens = [[]]
+        self.line_tokens: List[StyleAndTextTuples] = [[]]
 
         # Marks. (Mapping from mark name to (cursor position, scroll_offset).)
-        self.marks = {}
+        self.marks: Dict[str, Tuple[int, int]] = {}
 
         # `Pager` sets this flag when he starts reading the generator of this
         # source in a coroutine.
@@ -62,7 +56,7 @@ class _SourceInfo(object):
         self.window = create_buffer_window(self)
 
 
-class Pager(object):
+class Pager:
     """
     The Pager main application.
 
@@ -77,16 +71,19 @@ class Pager(object):
     :param style: Prompt_toolkit `Style` instance.
     :param search_text: `None` or the search string that is highlighted.
     """
-    def __init__(self, vi_mode=False, style=None, search_text=None,
-                 titlebar_tokens=None):
-        assert isinstance(vi_mode, bool)
-        assert style is None or isinstance(style, Style)
 
-        self.sources = []
+    def __init__(
+        self,
+        vi_mode: bool = False,
+        style: Optional[Style] = None,
+        search_text: Optional[str] = None,
+        titlebar_tokens=None,
+    ) -> None:
+        self.sources: List[Source] = []
         self.current_source_index = 0  # Index in `self.sources`.
         self.highlight_search = True
         self.in_colon_mode = False
-        self.message = None
+        self.message: Optional[str] = None
         self.displaying_help = False
         self.search_text = search_text
         self.display_titlebar = bool(titlebar_tokens)
@@ -98,25 +95,26 @@ class Pager(object):
         # bottom of the visible content. This is similar to 'tail -f'.
         self.forward_forever = False
 
-        # Status information for all sources. Source -> _SourceInfo.
+        # Status information for all sources. Source -> SourceInfo.
         # (Remember this info as long as the Source object exists.)
-        self.source_info = weakref.WeakKeyDictionary()
+        self.source_info: weakref.WeakKeyDictionary[
+            Source, SourceInfo
+        ] = weakref.WeakKeyDictionary()
 
         # Create prompt_toolkit stuff.
 
-        def open_file(buff):
+        def open_file(buff: Buffer) -> bool:
             # Open file.
             self.open_file(buff.text)
-
-            # Focus main buffer again.
-            buff.reset()
+            return False
 
         # Buffer for the 'Examine:' input.
         self.examine_buffer = Buffer(
-            name='EXAMINE',
+            name="EXAMINE",
             completer=PathCompleter(expanduser=True),
             accept_handler=open_file,
-            multiline=False)
+            multiline=False,
+        )
 
         # Search buffer.
         self.search_buffer = Buffer(multiline=False)
@@ -124,7 +122,7 @@ class Pager(object):
         self.layout = PagerLayout(self)
 
         bindings = create_key_bindings(self)
-        self.application = Application(
+        self.application: Application[None] = Application(
             input=create_input(sys.stdout),
             layout=Layout(container=self.layout.container),
             enable_page_navigation_bindings=True,
@@ -132,18 +130,20 @@ class Pager(object):
             style=style or Style.from_dict(ui_style),
             mouse_support=True,
             after_render=self._after_render,
-            full_screen=True)
+            full_screen=True,
+        )
 
         # Hide message when a key is pressed.
-        def key_pressed(_):
+        def key_pressed(_) -> None:
             self.message = None
+
         self.application.key_processor.before_key_press += key_pressed
 
         if vi_mode:
             self.application.editing_mode = EditingMode.VI
 
     @classmethod
-    def from_pipe(cls, lexer=None):
+    def from_pipe(cls, lexer: Optional[Lexer] = None) -> "Pager":
         """
         Create a pager from another process that pipes in our stdin.
         """
@@ -153,7 +153,7 @@ class Pager(object):
         return self
 
     @property
-    def current_source(self):
+    def current_source(self) -> Source:
         " The current `Source`. "
         try:
             return self.sources[self.current_source_index]
@@ -161,13 +161,13 @@ class Pager(object):
             return self._dummy_source
 
     @property
-    def current_source_info(self):
+    def current_source_info(self) -> SourceInfo:
         try:
             return self.source_info[self.current_source]
         except KeyError:
-            return _SourceInfo(self, self.current_source)
+            return SourceInfo(self, self.current_source)
 
-    def open_file(self, filename):
+    def open_file(self, filename: str) -> None:
         """
         Open this file.
         """
@@ -176,17 +176,15 @@ class Pager(object):
         try:
             source = FileSource(filename, lexer=lexer)
         except IOError as e:
-            self.message = '{}'.format(e)
+            self.message = "{}".format(e)
         else:
             self.add_source(source)
 
-    def add_source(self, source):
+    def add_source(self, source: Source) -> None:
         """
         Add a new :class:`.Source` instance.
         """
-        assert isinstance(source, Source)
-
-        source_info = _SourceInfo(self, source)
+        source_info = SourceInfo(self, source)
         self.source_info[source] = source_info
 
         self.sources.append(source)
@@ -195,7 +193,7 @@ class Pager(object):
         self.current_source_index = len(self.sources) - 1
         self.application.layout.focus(source_info.window)
 
-    def remove_current_source(self):
+    def remove_current_source(self) -> None:
         """
         Remove the current source from the pager.
         (If >1 source is left.)
@@ -211,26 +209,26 @@ class Pager(object):
         else:
             self.message = "Can't remove the last buffer."
 
-    def focus_previous_source(self):
+    def focus_previous_source(self) -> None:
         self.current_source_index = (self.current_source_index - 1) % len(self.sources)
         self.application.layout.focus(self.current_source_info.window)
         self.in_colon_mode = False
 
-    def focus_next_source(self):
+    def focus_next_source(self) -> None:
         self.current_source_index = (self.current_source_index + 1) % len(self.sources)
         self.application.layout.focus(self.current_source_info.window)
         self.in_colon_mode = False
 
-    def display_help(self):
+    def display_help(self) -> None:
         """
         Display help text.
         """
         if not self.displaying_help:
-            source = FormattedTextSource(HELP, name='<help>')
+            source = FormattedTextSource(HELP, name="<help>")
             self.add_source(source)
             self.displaying_help = True
 
-    def quit_help(self):
+    def quit_help(self) -> None:
         """
         Hide the help text.
         """
@@ -238,7 +236,7 @@ class Pager(object):
             self.remove_current_source()
             self.displaying_help = False
 
-    def _after_render(self, app):
+    def _after_render(self, app: Application) -> None:
         """
         Each time when the rendering is done, we should see whether we need to
         read more data from the input pipe.
@@ -251,6 +249,7 @@ class Pager(object):
         source_info = self.source_info[source]
         b = source_info.buffer
         line_tokens = source_info.line_tokens
+        loop = asyncio.get_event_loop()
 
         if not source_info.waiting_for_input_stream and not source.eof() and info:
             lines_below_bottom = info.ui_content.line_count - info.last_visible_line()
@@ -260,15 +259,13 @@ class Pager(object):
                 # Lines to be loaded.
                 lines = [info.window_height * 2 - lines_below_bottom]  # nonlocal
 
-                fd = source.get_fd()
-
-                def handle_content(tokens):
+                def handle_content(tokens: StyleAndTextTuples) -> List[str]:
                     """ Handle tokens, update `line_tokens`, decrease
                     line count and return list of characters. """
                     data = []
                     for token_char in tokens:
                         char = token_char[1]
-                        if char == '\n':
+                        if char == "\n":
                             line_tokens.append([])
 
                             # Decrease line count.
@@ -278,66 +275,46 @@ class Pager(object):
                         data.append(char)
                     return data
 
-                def insert_text(list_of_fragments):
-                    document = Document(b.text + ''.join(list_of_fragments), b.cursor_position)
+                def insert_text(list_of_fragments: Sequence[str]) -> None:
+                    document = Document(
+                        b.text + "".join(list_of_fragments), b.cursor_position
+                    )
                     b.set_document(document, bypass_readonly=True)
 
                     if self.forward_forever:
                         b.cursor_position = len(b.text)
 
-                def receive_content_from_fd():
-                    # Read data from the source.
-                    tokens = source.read_chunk()
-                    data = handle_content(tokens)
-
-                    # Set document.
-                    insert_text(data)
-
-                    # Remove the reader when we received another whole page.
-                    # or when there is nothing more to read.
-                    if lines[0] <= 0 or source.eof():
-                        if fd is not None:
-                            get_event_loop().remove_reader(fd)
-                        source_info.waiting_for_input_stream = False
-
-                    # Redraw.
+                    # Schedule redraw.
                     self.application.invalidate()
 
-                def receive_content_from_generator():
+                    source_info.waiting_for_input_stream = False
+
+                def receive_content_from_generator() -> None:
                     " (in executor) Read data from generator. "
                     # Call `read_chunk` as long as we need more lines.
                     while lines[0] > 0 and not source.eof():
                         tokens = source.read_chunk()
                         data = handle_content(tokens)
-                        insert_text(data)
-
-                        # Schedule redraw.
-                        self.application.invalidate()
-
-                    source_info.waiting_for_input_stream = False
+                        loop.call_soon(insert_text, data)
 
                 # Set 'waiting_for_input_stream' and render.
                 source_info.waiting_for_input_stream = True
                 self.application.invalidate()
 
-                # Add reader for stdin.
-                if fd is not None:
-                    get_event_loop().add_reader(fd, receive_content_from_fd)
-                else:
-                    # Execute receive_content_from_generator in thread.
-                    # (Don't use 'run_in_executor', because we need a daemon.
-                    t = threading.Thread(target=receive_content_from_generator)
-                    t.daemon = True
-                    t.start()
+                # Execute receive_content_from_generator in thread.
+                # (Don't use 'run_in_executor', because we need a daemon.
+                t = threading.Thread(target=receive_content_from_generator)
+                t.daemon = True
+                t.start()
 
-    def run(self):
+    def run(self) -> None:
         """
         Create an event loop for the application and run it.
         """
         try:
             # Set search highlighting.
             if self.search_text:
-                self.application.search_state.text = self.search_text
+                self.application.current_search_state.text = self.search_text
 
             return self.application.run()
         finally:
