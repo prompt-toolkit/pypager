@@ -1,4 +1,4 @@
 """
 A pager implementation in Python.
 """
-__version__ = "0.5"
+__version__ = "3.0.0"

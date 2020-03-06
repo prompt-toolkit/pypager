@@ -1,6 +1,16 @@
 CHANGELOG
 =========
 
+3.0.0: 2020-03-06
+-----------------
+
+- Upgrade to prompt_toolkit 3.0
+- Dropping support for prompt_toolkit 2.0 and Python 2.7.
+
+- Added type annotations everywhere.
+- Fixed some issues when displaying local files.
+
+
 0.5: 2018-11-28
 ---------------
 
