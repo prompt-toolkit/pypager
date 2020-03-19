@@ -260,8 +260,6 @@ class Pager(object):
                 # Lines to be loaded.
                 lines = [info.window_height * 2 - lines_below_bottom]  # nonlocal
 
-                fd = source.get_fd()
-
                 def handle_content(tokens):
                     """ Handle tokens, update `line_tokens`, decrease
                     line count and return list of characters. """
@@ -285,24 +283,6 @@ class Pager(object):
                     if self.forward_forever:
                         b.cursor_position = len(b.text)
 
-                def receive_content_from_fd():
-                    # Read data from the source.
-                    tokens = source.read_chunk()
-                    data = handle_content(tokens)
-
-                    # Set document.
-                    insert_text(data)
-
-                    # Remove the reader when we received another whole page.
-                    # or when there is nothing more to read.
-                    if lines[0] <= 0 or source.eof():
-                        if fd is not None:
-                            get_event_loop().remove_reader(fd)
-                        source_info.waiting_for_input_stream = False
-
-                    # Redraw.
-                    self.application.invalidate()
-
                 def receive_content_from_generator():
                     " (in executor) Read data from generator. "
                     # Call `read_chunk` as long as we need more lines.
@@ -320,15 +300,11 @@ class Pager(object):
                 source_info.waiting_for_input_stream = True
                 self.application.invalidate()
 
-                # Add reader for stdin.
-                if fd is not None:
-                    get_event_loop().add_reader(fd, receive_content_from_fd)
-                else:
-                    # Execute receive_content_from_generator in thread.
-                    # (Don't use 'run_in_executor', because we need a daemon.
-                    t = threading.Thread(target=receive_content_from_generator)
-                    t.daemon = True
-                    t.start()
+                # Execute receive_content_from_generator in thread.
+                # (Don't use 'run_in_executor', because we need a daemon.
+                t = threading.Thread(target=receive_content_from_generator)
+                t.daemon = True
+                t.start()
 
     def run(self):
         """

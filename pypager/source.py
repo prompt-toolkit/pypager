@@ -31,10 +31,6 @@ class Source(with_metaclass(ABCMeta, object)):
     lexer = None
 
     @abstractmethod
-    def get_fd(self):
-        " Wait until this fd is ready. Returns None if we should'nt wait. "
-
-    @abstractmethod
     def get_name(self):
         " Return the filename or name for this input. "
 
@@ -57,9 +53,6 @@ class DummySource(Source):
     def __init__(self):
         self._r, self._w = os.pipe()
         os.close(self._w)
-
-    def get_fd(self):
-        return self._r
 
     def get_name(self):
         return ''
@@ -103,9 +96,6 @@ class PipeSource(Source):
 
     def get_name(self):
         return self.name
-
-    def get_fd(self):
-        return self.fileno
 
     def eof(self):
         return self._eof
@@ -341,9 +331,6 @@ class GeneratorSource(Source):
     def get_name(self):
         return self.name
 
-    def get_fd(self):
-        return None
-
     def eof(self):
         return self._eof
 
@@ -372,9 +359,6 @@ class StringSource(Source):
     def get_name(self):
         return self.name
 
-    def get_fd(self):
-        return None
-
     def eof(self):
         return self._read
 
@@ -397,9 +381,6 @@ class FormattedTextSource(Source):
 
     def get_name(self):
         return self.name
-
-    def get_fd(self):
-        return None
 
     def eof(self):
         return self._read
