@@ -246,10 +246,14 @@ class PagerLayout:
         """
         Displayed at the bottom right.
         """
-        buffer = self.pager.source_info[self.pager.current_source].buffer
+        source_info = self.pager.source_info[self.pager.current_source]
+        buffer = source_info.buffer
         document = buffer.document
         row = document.cursor_position_row + 1
         col = document.cursor_position_col + 1
+
+        if source_info.wrap_lines:
+            col = "WRAP"
 
         if self.pager.current_source.eof():
             percentage = int(100 * row / document.line_count)
@@ -287,8 +291,13 @@ def create_buffer_window(source_info: "SourceInfo") -> Window:
         HighlightMatchingBracketProcessor(),
     ]
 
+    @Condition
+    def wrap_lines() -> bool:
+        return source_info.wrap_lines
+
     return Window(
         always_hide_cursor=True,
+        wrap_lines=wrap_lines,
         content=BufferControl(
             buffer=source_info.buffer,
             lexer=source_info.source.lexer,
