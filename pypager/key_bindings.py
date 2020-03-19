@@ -207,8 +207,12 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
         " Cancel search when backspace is pressed. "
         stop_search()
 
-    @handle("left", filter=default_focus)
-    @handle("escape", "(", filter=default_focus)
+    @Condition
+    def line_wrapping_enable() -> bool:
+        return pager.current_source_info.wrap_lines
+
+    @handle("left", filter=default_focus & ~line_wrapping_enable)
+    @handle("escape", "(", filter=default_focus & ~line_wrapping_enable)
     def _left(event: E) -> None:
         " Scroll half page to the left. "
         w = event.app.layout.current_window
@@ -227,8 +231,8 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
             # Scroll.
             w.horizontal_scroll = max(0, w.horizontal_scroll - amount)
 
-    @handle("right", filter=default_focus)
-    @handle("escape", ")", filter=default_focus)
+    @handle("right", filter=default_focus & ~line_wrapping_enable)
+    @handle("escape", ")", filter=default_focus & ~line_wrapping_enable)
     def _right(event: E) -> None:
         " Scroll half page to the right. "
         w = event.app.layout.current_window
@@ -297,5 +301,11 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     def _suspend(event: E) -> None:
         " Suspend to bakground. "
         event.app.suspend_to_background()
+
+    @handle("w")
+    def _suspend(event: E) -> None:
+        " Enable/disable line wrapping. "
+        source_info = pager.current_source_info
+        source_info.wrap_lines = not source_info.wrap_lines
 
     return kb

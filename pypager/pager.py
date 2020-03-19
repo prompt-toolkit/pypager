@@ -53,6 +53,9 @@ class SourceInfo:
         # source in a coroutine.
         self.waiting_for_input_stream = False
 
+        # Enable/disable line wrapping.
+        self.wrap_lines = False
+
         self.window = create_buffer_window(self)
 
 

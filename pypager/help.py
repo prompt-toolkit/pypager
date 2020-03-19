@@ -64,6 +64,10 @@ HELP = (
   <keys>:d               </keys> Delete the current file from the command line list.
   <keys>=  ^G  :f        </keys> Print current file name.
 
+  <subtitle> Extras </subtitle>
+
+  <keys>w                </keys> Enable/disable <b>line wrapping</b>.
+
   <subtitle> About Pypager </subtitle>
 
   Pypager is a <u>prompt_toolkit</u> application.
