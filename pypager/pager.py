@@ -152,7 +152,11 @@ class Pager:
         """
         assert not sys.stdin.isatty()
         self = cls()
-        self.add_source(PipeSource(fileno=sys.stdin.fileno(), lexer=lexer))
+        self.add_source(
+            PipeSource(
+                fileno=sys.stdin.fileno(), lexer=lexer, encoding=sys.stdin.encoding
+            )
+        )
         return self
 
     @property
