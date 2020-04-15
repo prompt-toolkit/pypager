@@ -1,6 +1,8 @@
 pypager
 =======
 
+|Build Status|  |PyPI|  |License|
+
 *A $PAGER in pure Python*
 
 ::
@@ -84,3 +86,13 @@ As a library
         p = Pager(source)
         p.run()
 
+
+.. |Build Status| image:: https://api.travis-ci.org/prompt-toolkit/pypager.svg?branch=master
+    :target: https://travis-ci.org/prompt-toolkit/pypager#
+
+.. |License| image:: https://img.shields.io/github/license/prompt-toolkit/pypager.svg
+    :target: https://github.com/prompt-toolkit/pypager/blob/master/LICENSE
+
+.. |PyPI| image:: https://pypip.in/version/pypager/badge.svg
+    :target: https://pypi.python.org/pypi/pypager/
+    :alt: Latest Version

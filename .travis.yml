@@ -1,0 +1,23 @@
+sudo: false
+language: python
+
+matrix:
+  include:
+      - python: 3.6
+      - python: 3.7
+
+install:
+  - travis_retry pip install . isort black mypy
+  - pip list
+
+script:
+  - echo "$TRAVIS_PYTHON_VERSION"
+
+  # Check wheather the imports were sorted correctly.
+  - isort -c -rc pypager setup.py examples
+
+  # Check code formatting.
+  - black --check pypager setup.py examples
+
+  # Type checking
+  - mypy pypager
