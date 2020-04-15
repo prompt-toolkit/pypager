@@ -73,8 +73,12 @@ class PipeSource(Source):
     """
 
     def __init__(
-        self, fileno: int, lexer: Optional[Lexer] = None, name: str = "<stdin>"
-    ):
+        self,
+        fileno: int,
+        lexer: Optional[Lexer] = None,
+        name: str = "<stdin>",
+        encoding: str = "utf-8",
+    ) -> None:
         self.fileno = fileno
         self.lexer = lexer
         self.name = name
@@ -99,9 +103,10 @@ class PipeSource(Source):
         next(self._parser)
 
         # Create incremental decoder for decoding stdin.
-        # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`, because
-        # it could be that we are in the middle of a utf-8 byte sequence.
-        self._stdin_decoder_cls = getincrementaldecoder("utf-8")
+        # We can not just do `os.read(stdin.fileno(), 1024).decode('utf-8')`,
+        # because it could be that we are in the middle of a utf-8 byte
+        # sequence.
+        self._stdin_decoder_cls = getincrementaldecoder(encoding)
         self._stdin_decoder = self._stdin_decoder_cls(errors="ignore")
 
     def get_name(self) -> str:
