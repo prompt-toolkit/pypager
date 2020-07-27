@@ -382,7 +382,7 @@ class StringSource(Source):
     Take a Python string is input for the pager.
     """
 
-    def __init__(self, text: str, lexer: Optional[Lexer], name: str = "") -> None:
+    def __init__(self, text: str, lexer: Optional[Lexer] = None, name: str = "") -> None:
         self.text = text
         self.lexer = lexer
         self.name = name
