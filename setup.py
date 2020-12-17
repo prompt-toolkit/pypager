@@ -25,6 +25,8 @@ setup(
     python_requires=">=3.6",
     install_requires=install_requires,
     entry_points={
-        "console_scripts": ["pypager = pypager.entry_points.run_pypager:run",]
+        "console_scripts": [
+            "pypager = pypager.entry_points.run_pypager:run",
+        ]
     },
 )

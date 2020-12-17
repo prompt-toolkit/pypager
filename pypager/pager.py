@@ -77,6 +77,7 @@ class Pager:
 
     def __init__(
         self,
+        *,
         vi_mode: bool = False,
         style: Optional[Style] = None,
         search_text: Optional[str] = None,
@@ -187,7 +188,7 @@ class Pager:
         else:
             self.add_source(source)
 
-    def add_source(self, source: Source) -> None:
+    def add_source(self, source: Source) -> SourceInfo:
         """
         Add a new :class:`.Source` instance.
         """
@@ -199,6 +200,8 @@ class Pager:
         # Focus
         self.current_source_index = len(self.sources) - 1
         self.application.layout.focus(source_info.window)
+
+        return source_info
 
     def remove_current_source(self) -> None:
         """
@@ -314,16 +317,29 @@ class Pager:
                 t.daemon = True
                 t.start()
 
+    def _before_run(self) -> None:
+        # Set search highlighting.
+        if self.search_text:
+            self.application.current_search_state.text = self.search_text
+
     def run(self) -> None:
         """
         Create an event loop for the application and run it.
         """
         try:
-            # Set search highlighting.
-            if self.search_text:
-                self.application.current_search_state.text = self.search_text
-
+            self._before_run()
             return self.application.run()
+        finally:
+            # XXX: Close all sources which are opened by the pager itself.
+            pass
+
+    async def run_async(self) -> None:
+        """
+        Create an event loop for the application and run it.
+        """
+        try:
+            self._before_run()
+            return await self.application.run_async()
         finally:
             # XXX: Close all sources which are opened by the pager itself.
             pass

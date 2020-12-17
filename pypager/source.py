@@ -24,6 +24,7 @@ __all__ = [
     "PipeSource",
     "GeneratorSource",
     "StringSource",
+    "FormattedTextSource",
 ]
 
 

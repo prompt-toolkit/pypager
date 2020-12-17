@@ -39,7 +39,7 @@ from prompt_toolkit.widgets.toolbars import (
 from .filters import HasColon
 
 if TYPE_CHECKING:
-    from .pager import SourceInfo, Pager
+    from .pager import Pager, SourceInfo
 
 __all__ = [
     "PagerLayout",
