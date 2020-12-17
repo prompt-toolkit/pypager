@@ -267,8 +267,8 @@ class Pager:
                 lines = [info.window_height * 2 - lines_below_bottom]  # nonlocal
 
                 def handle_content(tokens: StyleAndTextTuples) -> List[str]:
-                    """ Handle tokens, update `line_tokens`, decrease
-                    line count and return list of characters. """
+                    """Handle tokens, update `line_tokens`, decrease
+                    line count and return list of characters."""
                     data = []
                     for token_char in tokens:
                         char = token_char[1]

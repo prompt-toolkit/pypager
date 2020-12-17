@@ -10,9 +10,8 @@ ptk_version = prompt_toolkit.__version__
 pypager_version = pypager.__version__
 
 
-HELP = (
-    HTML(
-        """
+HELP = HTML(
+    """
             <title>SUMMARY OF COMMANDS</title>
 
  <keys> h  H             </keys> Display this help.
@@ -77,12 +76,10 @@ HELP = (
   - prompt_toolkit version: <version>%s</version>
 
 """
-    )
-    % (
-        pypager_version,
-        python_version[0],
-        python_version[1],
-        python_version[2],
-        ptk_version,
-    )
+) % (
+    pypager_version,
+    python_version[0],
+    python_version[1],
+    python_version[2],
+    ptk_version,
 )

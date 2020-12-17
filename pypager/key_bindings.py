@@ -201,7 +201,8 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
         return pager.search_buffer.text == ""
 
     @handle(
-        "backspace", filter=has_focus(pager.search_buffer) & search_buffer_is_empty,
+        "backspace",
+        filter=has_focus(pager.search_buffer) & search_buffer_is_empty,
     )
     def _cancel_search(event: E) -> None:
         " Cancel search when backspace is pressed. "
