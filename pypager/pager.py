@@ -17,6 +17,8 @@ from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.lexers import Lexer, PygmentsLexer
 from prompt_toolkit.styles import Style
+from prompt_toolkit.input import Input
+from prompt_toolkit.output import Output
 
 from .help import HELP
 from .key_bindings import create_key_bindings
@@ -82,6 +84,8 @@ class Pager:
         style: Optional[Style] = None,
         search_text: Optional[str] = None,
         titlebar_tokens=None,
+        input: Optional[Input] = None,
+        output: Optional[Output] = None,
     ) -> None:
         self.sources: List[Source] = []
         self.current_source_index = 0  # Index in `self.sources`.
@@ -125,9 +129,17 @@ class Pager:
 
         self.layout = PagerLayout(self)
 
+        # Input/output.
+        if input is None:
+            # By default, use the stdout device for input.
+            # (This makes it possible to pipe data to stdin, but still read key
+            # strokes from the TTY).
+            input = create_input(sys.stdout)
+
         bindings = create_key_bindings(self)
         self.application: Application[None] = Application(
-            input=create_input(sys.stdout),
+            input=input,
+            output=output,
             layout=Layout(container=self.layout.container),
             enable_page_navigation_bindings=True,
             key_bindings=bindings,
