@@ -94,6 +94,7 @@ class PipeSource(Source):
             bold=False,
             underline=False,
             italic=False,
+            strike=False,
             blink=False,
             reverse=False,
             hidden=False,
