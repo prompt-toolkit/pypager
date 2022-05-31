@@ -303,7 +303,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
         " Suspend to bakground. "
         event.app.suspend_to_background()
 
-    @handle("w")
+    @handle("w", filter=default_focus)
     def _suspend(event: E) -> None:
         " Enable/disable line wrapping. "
         source_info = pager.current_source_info
