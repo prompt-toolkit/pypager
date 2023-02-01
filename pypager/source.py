@@ -34,11 +34,11 @@ class Source(metaclass=ABCMeta):
 
     @abstractmethod
     def get_name(self) -> str:
-        " Return the filename or name for this input. "
+        "Return the filename or name for this input."
 
     @abstractmethod
     def eof(self) -> bool:
-        " Return True when we reached the end of the input. "
+        "Return True when we reached the end of the input."
 
     @abstractmethod
     def read_chunk(self) -> StyleAndTextTuples:
@@ -371,7 +371,7 @@ class GeneratorSource(Source):
         return self._eof
 
     def read_chunk(self) -> StyleAndTextTuples:
-        " Read data from input. Return a list of token/text tuples. "
+        "Read data from input. Return a list of token/text tuples."
         try:
             return explode_text_fragments(next(self.generator))
         except StopIteration:

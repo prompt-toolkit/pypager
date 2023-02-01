@@ -55,7 +55,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("Q", filter=default_focus | has_colon)
     @handle("Z", "Z", filter=default_focus)
     def _quit(event: E) -> None:
-        " Quit. "
+        "Quit."
         if pager.displaying_help:
             pager.quit_help()
         else:
@@ -66,26 +66,26 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-f", filter=default_focus)
     @handle("c-v", filter=default_focus)
     def _pagedown(event: E) -> None:
-        " Page down."
+        "Page down."
         scroll_page_down(event)
 
     @handle("b", filter=default_focus)
     @handle("c-b", filter=default_focus)
     @handle("escape", "v", filter=default_focus)
     def _pageup(event: E) -> None:
-        " Page up."
+        "Page up."
         scroll_page_up(event)
 
     @handle("d", filter=default_focus)
     @handle("c-d", filter=default_focus)
     def _halfdown(event: E) -> None:
-        " Half page down."
+        "Half page down."
         scroll_half_page_down(event)
 
     @handle("u", filter=default_focus)
     @handle("c-u", filter=default_focus)
     def _halfup(event: E) -> None:
-        " Half page up."
+        "Half page up."
         scroll_half_page_up(event)
 
     @handle("e", filter=default_focus)
@@ -96,7 +96,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-m", filter=default_focus)
     @handle("down", filter=default_focus)
     def _down(event: E) -> None:
-        " Scoll one line down."
+        "Scoll one line down."
         if event.arg > 1:
             # When an argument is given, go this amount of lines down.
             event.current_buffer.auto_down(count=event.arg)
@@ -110,7 +110,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-p", filter=default_focus)
     @handle("up", filter=default_focus)
     def _up(event: E) -> None:
-        " Scoll one line up."
+        "Scoll one line up."
         if event.arg > 1:
             event.current_buffer.auto_up(count=event.arg)
         else:
@@ -118,40 +118,40 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
 
     @handle(Keys.Escape, "u")
     def _toggle_highlighting(event: E) -> None:
-        " Toggle search highlighting. "
+        "Toggle search highlighting."
         pager.highlight_search = not pager.highlight_search
 
     @handle("=", filter=default_focus)
     @handle(Keys.ControlG, filter=default_focus)
     @handle("f", filter=has_colon)
     def _print_filename(event: E) -> None:
-        " Print the current file name. "
+        "Print the current file name."
         pager.message = " {} ".format(pager.current_source.get_name())
 
     @handle("h", filter=default_focus & ~displaying_help)
     @handle("H", filter=default_focus & ~displaying_help)
     def _help(event: E) -> None:
-        " Display Help. "
+        "Display Help."
         pager.display_help()
 
     @handle("g", filter=default_focus)
     @handle("<", filter=default_focus)
     @handle("escape", "<", filter=default_focus)
     def _firstline(event: E) -> None:
-        " Go to the first line of the file. "
+        "Go to the first line of the file."
         event.current_buffer.cursor_position = 0
 
     @handle("G", filter=default_focus)
     @handle(">", filter=default_focus)
     @handle("escape", ">", filter=default_focus)
     def _lastline(event: E) -> None:
-        " Go to the last line of the file. "
+        "Go to the last line of the file."
         b = event.current_buffer
         b.cursor_position = len(b.text)
 
     @handle("m", Keys.Any, filter=default_focus)
     def _mark(event: E) -> None:
-        " Mark current position. "
+        "Mark current position."
         source_info = pager.current_source_info
 
         source_info.marks[event.data] = (
@@ -161,12 +161,12 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
 
     @handle("'", Keys.Any, filter=default_focus)
     def _goto_mark(event: E) -> None:
-        " Go to a previously marked position. "
+        "Go to a previously marked position."
         go_to_mark(event, event.data)
 
     @handle("c-x", Keys.ControlX, filter=default_focus)
     def _gotomark_dot(event: E) -> None:
-        " Same as '. "
+        "Same as '."
         go_to_mark(event, ".")
 
     def go_to_mark(event: E, mark: str) -> None:
@@ -187,7 +187,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
 
     @handle("F", filter=default_focus)
     def _follow(event: E) -> None:
-        " Forward forever, like 'tail -f'. "
+        "Forward forever, like 'tail -f'."
         pager.forward_forever = True
 
     @handle("r", filter=default_focus)
@@ -197,7 +197,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
 
     @Condition
     def search_buffer_is_empty() -> bool:
-        " Returns True when the search buffer is empty. "
+        "Returns True when the search buffer is empty."
         return pager.search_buffer.text == ""
 
     @handle(
@@ -205,7 +205,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
         filter=has_focus(pager.search_buffer) & search_buffer_is_empty,
     )
     def _cancel_search(event: E) -> None:
-        " Cancel search when backspace is pressed. "
+        "Cancel search when backspace is pressed."
         stop_search()
 
     @Condition
@@ -215,7 +215,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("left", filter=default_focus & ~line_wrapping_enable)
     @handle("escape", "(", filter=default_focus & ~line_wrapping_enable)
     def _left(event: E) -> None:
-        " Scroll half page to the left. "
+        "Scroll half page to the left."
         w = event.app.layout.current_window
         b = event.app.current_buffer
 
@@ -235,7 +235,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("right", filter=default_focus & ~line_wrapping_enable)
     @handle("escape", ")", filter=default_focus & ~line_wrapping_enable)
     def _right(event: E) -> None:
-        " Scroll half page to the right. "
+        "Scroll half page to the right."
         w = event.app.layout.current_window
         b = event.app.current_buffer
 
@@ -264,12 +264,12 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
 
     @handle("n", filter=has_colon)
     def _next_file(event: E) -> None:
-        " Go to next file. "
+        "Go to next file."
         pager.focus_next_source()
 
     @handle("p", filter=has_colon)
     def _previous_file(event: E) -> None:
-        " Go to previous file. "
+        "Go to previous file."
         pager.focus_previous_source()
 
     @handle("e", filter=has_colon)
@@ -295,17 +295,17 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-c", filter=has_focus("EXAMINE"))
     @handle("c-g", filter=has_focus("EXAMINE"))
     def _cancel_examine(event: E) -> None:
-        " Cancel 'Examine' input. "
+        "Cancel 'Examine' input."
         event.app.layout.focus(pager.current_source_info.window)
 
     @handle("c-z", filter=Condition(lambda: suspend_to_background_supported()))
     def _suspend(event: E) -> None:
-        " Suspend to bakground. "
+        "Suspend to bakground."
         event.app.suspend_to_background()
 
     @handle("w")
     def _suspend(event: E) -> None:
-        " Enable/disable line wrapping. "
+        "Enable/disable line wrapping."
         source_info = pager.current_source_info
         source_info.wrap_lines = not source_info.wrap_lines
 

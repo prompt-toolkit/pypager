@@ -110,7 +110,7 @@ class _DynamicBody(Container):
         ] = weakref.WeakKeyDictionary()  # Map buffer_name to Window.
 
     def get_buffer_window(self) -> Window:
-        " Return the Container object according to which Buffer/Source is visible. "
+        "Return the Container object according to which Buffer/Source is visible."
         return self.pager.current_source_info.window
 
     def reset(self) -> None:

@@ -174,7 +174,7 @@ class Pager:
 
     @property
     def current_source(self) -> Source:
-        " The current `Source`. "
+        "The current `Source`."
         try:
             return self.sources[self.current_source_index]
         except IndexError:
@@ -312,7 +312,7 @@ class Pager:
                     source_info.waiting_for_input_stream = False
 
                 def receive_content_from_generator() -> None:
-                    " (in executor) Read data from generator. "
+                    "(in executor) Read data from generator."
                     # Call `read_chunk` as long as we need more lines.
                     while lines[0] > 0 and not source.eof():
                         tokens = source.read_chunk()
