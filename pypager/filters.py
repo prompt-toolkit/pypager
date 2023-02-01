@@ -13,6 +13,7 @@ __all__ = [
 
 class _PagerFilter(Filter):
     def __init__(self, pager: "Pager") -> None:
+        super().__init__()
         self.pager = pager
 
 
