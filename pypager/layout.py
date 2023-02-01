@@ -1,5 +1,5 @@
 import weakref
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from prompt_toolkit.application import get_app
 from prompt_toolkit.enums import SYSTEM_BUFFER
@@ -14,6 +14,7 @@ from prompt_toolkit.layout.containers import (
     VSplit,
     Window,
     WindowAlign,
+    WindowRenderInfo,
 )
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.menus import MultiColumnCompletionsMenu
@@ -117,7 +118,7 @@ class _DynamicBody(Container):
         for body in self._bodies.values():
             body.reset()
 
-    def get_render_info(self):
+    def get_render_info(self) -> Optional[WindowRenderInfo]:
         return self.get_buffer_window().render_info
 
     def preferred_width(self, *a, **kw):
@@ -131,10 +132,6 @@ class _DynamicBody(Container):
 
     def get_children(self):
         return [self.get_buffer_window()]
-
-    def walk(self, *a, **kw):
-        # Required for prompt_toolkit.layout.utils.find_window_for_buffer_name.
-        return self.get_buffer_window().walk(*a, **kw)
 
 
 class PagerLayout:
@@ -250,7 +247,7 @@ class PagerLayout:
         buffer = source_info.buffer
         document = buffer.document
         row = document.cursor_position_row + 1
-        col = document.cursor_position_col + 1
+        col = str(document.cursor_position_col + 1)
 
         if source_info.wrap_lines:
             col = "WRAP"

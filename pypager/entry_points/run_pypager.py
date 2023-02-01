@@ -16,7 +16,7 @@ __all__ = [
 ]
 
 
-def run():
+def run() -> None:
     if not sys.stdin.isatty():
         pager = Pager.from_pipe()
         pager.run()

@@ -260,6 +260,7 @@ class PipeSource(Source):
                     bgcolor=None,
                     bold=False,
                     underline=False,
+                    strike=False,
                     italic=False,
                     blink=False,
                     reverse=False,

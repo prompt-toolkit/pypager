@@ -5,20 +5,20 @@ import asyncio
 import sys
 import threading
 import weakref
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.completion import PathCompleter
 from prompt_toolkit.document import Document
 from prompt_toolkit.enums import EditingMode
-from prompt_toolkit.formatted_text import StyleAndTextTuples
+from prompt_toolkit.formatted_text import AnyFormattedText, StyleAndTextTuples
+from prompt_toolkit.input import Input
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.lexers import Lexer, PygmentsLexer
-from prompt_toolkit.styles import Style
-from prompt_toolkit.input import Input
 from prompt_toolkit.output import Output
+from prompt_toolkit.styles import Style
 
 from .help import HELP
 from .key_bindings import create_key_bindings
@@ -83,7 +83,7 @@ class Pager:
         vi_mode: bool = False,
         style: Optional[Style] = None,
         search_text: Optional[str] = None,
-        titlebar_tokens=None,
+        titlebar_tokens: Optional[AnyFormattedText] = None,
         input: Optional[Input] = None,
         output: Optional[Output] = None,
     ) -> None:
@@ -150,7 +150,7 @@ class Pager:
         )
 
         # Hide message when a key is pressed.
-        def key_pressed(_) -> None:
+        def key_pressed(_: object) -> None:
             self.message = None
 
         self.application.key_processor.before_key_press += key_pressed
@@ -258,7 +258,7 @@ class Pager:
             self.remove_current_source()
             self.displaying_help = False
 
-    def _after_render(self, app: Application) -> None:
+    def _after_render(self, app: Application[Any]) -> None:
         """
         Each time when the rendering is done, we should see whether we need to
         read more data from the input pipe.
