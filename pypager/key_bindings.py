@@ -96,7 +96,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-m", filter=default_focus)
     @handle("down", filter=default_focus)
     def _down(event: E) -> None:
-        "Scoll one line down."
+        "Scroll one line down."
         if event.arg > 1:
             # When an argument is given, go this amount of lines down.
             event.current_buffer.auto_down(count=event.arg)
@@ -110,7 +110,7 @@ def create_key_bindings(pager: "Pager") -> KeyBindings:
     @handle("c-p", filter=default_focus)
     @handle("up", filter=default_focus)
     def _up(event: E) -> None:
-        "Scoll one line up."
+        "Scroll one line up."
         if event.arg > 1:
             event.current_buffer.auto_up(count=event.arg)
         else:
