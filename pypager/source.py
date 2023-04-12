@@ -203,7 +203,7 @@ class PipeSource(Source):
                             #### token = ('C', ) + self._attrs
                             break
                         else:
-                            # Ignore unspported sequence.
+                            # Ignore unsupported sequence.
                             break
             else:
                 line_tokens.append((self._get_attrs_style() + " " + backspace_style, c))
