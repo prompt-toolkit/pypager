@@ -84,7 +84,7 @@ As a library
 
     if __name__ == '__main__':
         p = Pager()
-        p.add_source(GeneratorSource(generate_a_lot_of_content())
+        p.add_source(GeneratorSource(generate_a_lot_of_content()))
         p.run()
 
 
