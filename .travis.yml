@@ -14,10 +14,10 @@ script:
   - echo "$TRAVIS_PYTHON_VERSION"
 
   # Check wheather the imports were sorted correctly.
-  - isort -c -rc pypager setup.py examples
+  - isort -c -rc pypager examples
 
   # Check code formatting.
-  - black --check pypager setup.py examples
+  - black --check pypager examples
 
   # Type checking
   - mypy pypager

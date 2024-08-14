@@ -1,3 +1,19 @@
+[project]
+name = "pypager"
+description = """Pure Python pager (like "more" and "less")."""
+readme = "README.rst"
+authors = [{ name = "Jonathan Slenders" }]
+requires-python = ">=3.6"
+dependencies = ["prompt_toolkit>=3.0.0,<3.1.0", "pygments"]
+license = { file = "LICENSE" }
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/jonathanslenders/pypager"
+
+[project.scripts]
+pypager = "pypager.entry_points.run_pypager:run"
+
 [tool.black]
 target-version = ['py36']
 
@@ -11,3 +27,14 @@ known_third_party = "prompt_toolkit,pygments"
 force_grid_wrap = 0
 use_parentheses = true
 line_length = 88
+
+[tool.mypy]
+ignore_missing_imports = true
+no_implicit_optional = true
+platform = "win32"
+strict_equality = true
+strict_optional = true
+
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
